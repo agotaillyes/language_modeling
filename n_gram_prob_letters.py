@@ -4,6 +4,7 @@ import collections
 import string
 import re
 import sys
+from collections import *
 
 # megkapjuk a beolvasott file osszes token-et (szavat) kozpontozas nelkul
 def get_tokens_list(file_name):
@@ -11,24 +12,16 @@ def get_tokens_list(file_name):
     punct = set(string.punctuation)
     '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~1234567890'
 
+    letters = set('[!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~1234567890]')
+
     with open(file_name,'r') as f:
-<<<<<<< HEAD
          for line in f:
             for word in line.split():
-                if not word.startswith("-"):
+                word = re.sub('[!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~1234567890]','',word)
+                if not word.startswith('-') and word != '' and not (letters & set(word)):
                     word = word.lower()
-                    word = unicode(word,'utf-8')
-                    word = re.sub('[!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~1234567890]','',word)
-                    tokens_list.append(word)
-=======
-     for line in f:
-        for word in line.split():
-            word = word.lower()
-            word = re.sub('[!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~1234567890]','',word)
-            word = unicode(word,'utf-8')
-            if not word.startswith('-') and word != '':
-                tokens_list.append(word)
->>>>>>> some changes with printing
+                    #word = unicode(word,'utf-8')
+                    tokens_list.append(word+' ')
     return tokens_list
 
 
@@ -214,9 +207,7 @@ def ngram_backoff(ngram_letter_counter,prob_tilde,n_1prob_tilde,n_2prob_tilde,n_
     return backoff_prob_list
 
 ##############################################################################################
-<<<<<<< HEAD
 
-=======
 ####################if the letter occures less than 30 the letter will be *##################
 def changeSmallNrOfCharacters(ngram_letter_counter):
     i =0
@@ -232,217 +223,100 @@ def changeSmallNrOfCharacters(ngram_letter_counter):
             new_ngram_letter_counter[letter] = ngram_letter_counter[letter]
 
     return new_ngram_letter_counter
->>>>>>> some changes with printing
-################### MAIN ############################
+
+########################### TRAIN #############################
+def replace_file_without_special_char(filename, unigram_letter_nr):
+    with open(filename,"a") as myfile:
+        for word in tokens_list:
+            myfile.write(word)
+
+def train_char_ngram(fname,order,orderplus1_ngram_prob):
+    data = file(fname).read()
+    lm = defaultdict(Counter)
+    i=0
+
+    for i in xrange(len(data)-order):
+        history,char =data[i:i+order],data[i+order]
+        if char != " " and not (history.startswith(" ") or history.endswith(" ")):
+                word=history+char
+                lm[history][char]=orderplus1_ngram_prob[word]
+    return lm
+
+def print_train(train_list):
+    sorted(train_list)
+    for letter in train_list:
+        print letter
+        print str(train_list[letter].most_common(10))
+
+##################### FOR PRINTING #####################################
+
+def print_unigram_and_probs(sorted_letter_counter,ngram_unsmoothing_prob,ngram_add_one_prob,ngram_witten_bell):
+    for value,key in sorted_letter_counter:
+        value.encode('utf-8')
+        print 'unigram: {0}-{1}'.format(value,key)
+        print 'unsmoothing prob: ' + str(ngram_unsmoothing_prob[value])
+        print 'add-one smoothing prob:' + str(ngram_add_one_prob[value])
+        print 'witten-bell discounting prob: ' + str(ngram_witten_bell[value])
+
+############################### MAIN ############################
 if __name__ == '__main__':
     file_name = sys.argv[1]
-    # beteszi szonak olyanokat, amiket nem kellene
+
     tokens_list = get_tokens_list(file_name)
-    #print sorted(tokens_list,reverse=False)
+    #print sorted(tokens_list)
     all_letters_nr = get_all_letters_nr(tokens_list)
     #print all_letters_nr
-    k=11
+    k = 11
 
     ############## UNIGRAM #################
     unigram_letter_counter = n_gram_letter_counter(1,tokens_list)
     letters_type = len(unigram_letter_counter)
-    
-    sorted_unigram_letter_counter = sorted(unigram_letter_counter.iteritems(),key=lambda (k,v):v, reverse=True)
 
-    unigram_unsmoothing_prob = ngram_unsmoothing_prob(1,unigram_letter_counter,unigram_letter_counter,all_letters_nr)
-<<<<<<< HEAD
-=======
-    #print 'unigram letter counter: ' + str(sorted(unigram_letter_counter.iteritems(), key=lambda (k, v): v, reverse=True))
-    
+    #sorted_unigram_letter_counter = sorted(unigram_letter_counter.iteritems(), key=lambda (k,v):v,reverse=True)
+
+    #print sorted_unigram_letter_counter
+    #print 'unigram letter counter: ' + str(sorted(unigram_letter_counter.iteritems(),key=lambda (k,v): v,reverse=True))
+
     #print 'unigram letter counter: ' + str(sorted(changeSmallNrOfCharacters(unigram_letter_counter).iteritems(),key=lambda (k,v): v,reverse=True))
->>>>>>> some changes with printing
+
+    #unigram_unsmoothing_prob = ngram_unsmoothing_prob(1,unigram_letter_counter,unigram_letter_counter,all_letters_nr)
     #print 'unigram unsmoothing probabilities: ' + str(sorted(unigram_unsmoothing_prob.iteritems(),key=lambda (k,v): v,reverse=True))
 
-    unigram_add_one_prob = ngram_add_one_prob(1,unigram_letter_counter,unigram_letter_counter,all_letters_nr,letters_type)
+    #unigram_add_one_prob = ngram_add_one_prob(1,unigram_letter_counter,unigram_letter_counter,all_letters_nr,letters_type)
     #print 'unigram add-one probabilities: ' + str(sorted(unigram_add_one_prob.iteritems(),key=lambda (k,v): v,reverse=True))
 
-    unigram_witten_bell = ngram_witten_bell_prob(1,unigram_letter_counter,1)
+    #unigram_witten_bell = ngram_witten_bell_prob(1,unigram_letter_counter,1)
     #print 'unigram witten-bell discounting: ' + str(sorted(unigram_witten_bell.iteritems(),key=lambda (k,v): v,reverse=True))
-<<<<<<< HEAD
-
-    #unigramokra talan meg nem erdemes kiszamolni a good-turing-discounting-ot
-    #unigram_occuring_list = ngram_occuring_list(unigram_letter_counter,k)
-
-    #unigram_prob_tilde_list = prob_tilde(unigram_letter_counter,unigram_letter_counter,all_letters_nr)
-=======
-
-    print 'UNIGRAM'
-    print '=' * 80
-    for value, key in sorted_unigram_letter_counter:
-        print 'unigram: ' + value + ':' + str(key)
-        print 'unsmoothing prob: ' + str(unigram_unsmoothing_prob[value])
-        print 'add-one smoothing prob: ' + str(unigram_add_one_prob[value])
-        print 'witten-bell discounting: ' + str(unigram_witten_bell[value])
->>>>>>> some changes with printing
 
     ############## BIGRAM ##################
-    bigram_letter_counter = n_gram_letter_counter(2,tokens_list)
+    #bigram_letter_counter = n_gram_letter_counter(2,tokens_list)
     #print bigram_letter_counter
-    #print 'bigram letter counter: ' + str(sorted(bigram_letter_counter.iteritems(), key=lambda (k,v): v,reverse=True))
+    #print 'bigram letter counter: ' + str(sorted(bigram_letter_counter.iteritems(),key=lambda (k,v): v,reverse=True))
 
-    sorted_bigram_letter_counter = sorted(bigram_letter_counter.iteritems(),key=lambda (k,v):v, reverse=True)
-
-    bigram_unsmoothing_prob = ngram_unsmoothing_prob(2,bigram_letter_counter,unigram_letter_counter,all_letters_nr)
+    #bigram_unsmoothing_prob = ngram_unsmoothing_prob(2,bigram_letter_counter,unigram_letter_counter,all_letters_nr)
     #print 'bigram unsmoothing probabilities: ' + str(sorted(bigram_unsmoothing_prob.iteritems(),key=lambda (k,v): v,reverse=True))
 
-    bigram_add_one_prob = ngram_add_one_prob(2,bigram_letter_counter,unigram_letter_counter,all_letters_nr,letters_type)
+    #bigram_add_one_prob = ngram_add_one_prob(2,bigram_letter_counter,unigram_letter_counter,all_letters_nr,letters_type)
     #print 'bigram add-one probabilities: ' + str(sorted(bigram_add_one_prob.iteritems(),key=lambda (k,v): v,reverse=True))
 
-    bigram_witten_bell = ngram_witten_bell_prob(2,bigram_letter_counter,unigram_letter_counter)
+    #bigram_witten_bell = ngram_witten_bell_prob(2,bigram_letter_counter,unigram_letter_counter)
     #print 'bigram witten-bell discounting: ' + str(sorted(bigram_witten_bell.iteritems(),key=lambda (k,v): v,reverse=True))
-<<<<<<< HEAD
-
-    #bigram_occuring_list = ngram_occuring_list(bigram_letter_counter,k)
-    #print 'biram occuring list: ' + str(bigram_occuring_list)
-    #l = len(bigram_occuring_list)
-    #bigram_good_turing_discounting = ngram_good_turing_discounting(bigram_occuring_list,l)
-    #print 'bigram good turing discounting: ' + str(bigram_good_turing_discounting)
-
-    #bigram_prob_tilde_list = prob_tilde(bigram_letter_counter,unigram_letter_counter,all_letters_nr)
-    #print bigram_prob_tilde_list
-
-    #bigram_alpha = alpha(bigram_prob_tilde_list,unigram_prob_tilde_list,bigram_letter_counter)
-    #print alpha(bigram_prob_tilde_list,bigram_list)
-=======
-
-    print 'BIGRAM'
-    print '=' * 80
-    for value, key in sorted_bigram_letter_counter:
-        print 'bigram: ' + value + ':' + str(key)
-        print 'unsmoothing prob: ' + str(bigram_unsmoothing_prob[value])
-        print 'add-one smoothing prob: ' + str(bigram_add_one_prob[value])
-        print 'witten-bell discounting: ' + str(bigram_witten_bell[value])
->>>>>>> some changes with printing
 
     ############## TRIGRAM #################
     trigram_letter_counter = n_gram_letter_counter(3,tokens_list)
-    #print 'trigram letter counter' +  str(sorted(trigram_letter_counter.iteritems(),key=lambda (k,v): v, reverse=True))
+    #print trigram_letter_counter
+    #print 'trigram letter counter: ' + str(sorted(trigram_letter_counter.iteritems(),key=lambda (k,v): v,reverse=True))
 
-    sorted_trigram_letter_counter = sorted(trigram_letter_counter.iteritems(),key=lambda (k,v):v, reverse=True)
+    #trigram_unsmoothing_prob = ngram_unsmoothing_prob(3,trigram_letter_counter,bigram_letter_counter,all_letters_nr)
+    #print 'trigram unsmoothing probabilities: ' + str(trigram_unsmoothing_prob)
 
-    trigram_unsmoothing_prob = ngram_unsmoothing_prob(3,trigram_letter_counter,bigram_letter_counter,all_letters_nr)
-    #print 'trigram unsmoothing probabilities: ' + str(sorted(trigram_unsmoothing_prob.iteritems(),key=lambda (k,v): v,reverse=True))
+    #trigram_add_one_prob = ngram_add_one_prob(3,trigram_letter_counter,unigram_letter_counter,all_letters_nr,letters_type)
+    #print 'trigram add-one probabilities: ' + str(trigram_add_one_prob)
 
-    trigram_add_one_prob = ngram_add_one_prob(3,trigram_letter_counter,unigram_letter_counter,all_letters_nr,letters_type)
-    #print 'trigram add-one probabilities: ' + str(sorted(trigram_add_one_prob.iteritems(),key=lambda (k,v):v, reverse=True))
-
-    trigram_witten_bell = ngram_witten_bell_prob(3,trigram_letter_counter,bigram_letter_counter)
-<<<<<<< HEAD
+    #trigram_witten_bell = ngram_witten_bell_prob(3,trigram_letter_counter,bigram_letter_counter)
     #print 'trigram witten-bell discounting' + str(trigram_witten_bell)
-
-    #trigram_occuring_list = ngram_occuring_list(trigram_letter_counter,k)
-    #l = len(trigram_occuring_list)
-    #print 'trigram occuring list: ' + str(trigram_occuring_list)
-    #trigram_good_turing_discounting = ngram_good_turing_discounting(trigram_occuring_list,l)
-    #print 'trigram good-turing discounting: ' + str(trigram_good_turing_discounting)
-
-    #trigram_prob_tilde_list = prob_tilde(trigram_letter_counter,bigram_letter_counter,all_letters_nr)
-    #trigram_alpha = alpha(trigram_prob_tilde_list,bigram_prob_tilde_list,trigram_letter_counter)
-    #trigram_backoff_prob = ngram_backoff(trigram_list,trigram_letter_counter,trigram_prob_tilde_list,bigram_prob_tilde_list,unigram_prob_tilde_list,bigram_letter_counter,bigram_alpha,unigram_alpha)
-    #print trigram_list
-    #print trigram_list
-    #print sorted(trigram_prob_tilde_list.iteritems(), reverse=True)
-    #print bigram_prob_tilde_list
-    #print 'trigram BACKOFF: ' + str(trigram_backoff_prob)
-##############################################################################
-    orig_stdout = sys.stdout
-    f=file(sys.argv[2], 'w')
-    sys.stdout=f
     
-    print 'UNSMOOTHING unigram'
-    print '=' * 80
-    profile.run('print unigram_unsmoothing_prob')
-    
-    print 'UNSMOOTHING bigram'
-    print '=' * 80
-    profile.run('print bigram_unsmoothing_prob')
-    
-    print 'UNSMOOTHING trigram'
-    print '=' * 80
-    profile.run('print trigram_unsmoothing_prob')
-    
-    print 'ADD-ONE unigram'
-    print '=' * 80
-    profile.run('print unigram_add_one_prob ')
-    
-    print 'ADD-ONE bigram'
-    print '=' * 80
-    profile.run('print bigram_add_one_prob')
-    
-    print 'ADD-ONE trigram'
-    print '=' * 80
-    profile.run('print trigram_add_one_prob')
-    
-    print 'WITTEN-BELL unigram'
-    print '=' * 80
-    profile.run('print unigram_witten_bell')
-    
-    print 'WITTEN-BELL bigram'
-    print '=' * 80
-    profile.run('print bigram_witten_bell')
-    
-    print 'WITTEN-BELL trigram'
-    print '=' * 80
-    profile.run('print trigram_witten_bell')
-    
-    sys.stdout=orig_stdout
-    f.close()
-=======
-    #print 'trigram witten-bell discounting' + str(sorted(trigram_witten_bell.iteritems(), key=lambda (k,v):v, reverse=True))
-
-    print 'TRIGRAM'
-    print '=' * 80
-    for value, key in sorted_trigram_letter_counter:
-        print 'trigram: ' + value + ':' + str(key)
-        print 'unsmoothing prob: ' + str(trigram_unsmoothing_prob[value])
-        print 'add-one smoothing prob: ' + str(trigram_add_one_prob[value])
-        print 'witten-bell discounting: ' + str(trigram_witten_bell[value])
-##############################################################################
-    #orig_stdout = sys.stdout
-    #f=file(sys.argv[2],'w')
-    #sys.stdout=f
-
-    #print 'UNSMOOTHING unigram'
-    #print '=' * 80
-    #profile.run('print unigram_unsmoothing_prob')
-
-    #print 'ADD-ONE unigram'
-    #print '=' * 80
-    #profile.run('print unigram_add_one_prob')
-
-    #print 'WITTEN-BELL unigram'
-    #print '=' * 80
-    #profile.run('print unigram_witten_bell')
-
-    #print 'UNSMOOTHING bigram'
-    #print '=' * 80
-    #profile.run('print bigram_unsmoothing_prob')
-
-    #print 'ADD-ONE bigram'
-    #print '=' * 80
-    #profile.run('print bigram_add_one_prob')
-
-    #print 'WITTEN-BELL bigram'
-    #print '=' * 80
-    #profile.run('print bigram_witten_bell')
-
-    #print 'UNSMOOTHING trigram'
-    #print '=' * 80
-    #profile.run('print trigram_unsmoothing_prob')
-
-    #print 'ADD-ONE trigram'
-    #print '=' * 80
-    #profile.run('print trigram_add_one_prob')
-
-    #print 'WITTEN-BELL trigram'
-    #print '=' * 80
-    #profile.run('print trigram_witten_bell')
-
-    #sys.stdout=orig_stdout
-    #f.close()
->>>>>>> some changes with printing
+    ########### TRAIN ###################################
+    replace_file_without_special_char("train_without.txt",tokens_list)
+    train_bigram_unsmoothing = train_char_ngram("train_without.txt",2,trigram_unsmoothing_prob)
+    print_train(train_bigram_unsmoothing)
