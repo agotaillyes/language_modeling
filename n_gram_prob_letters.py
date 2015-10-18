@@ -5,6 +5,8 @@ import string
 import re
 import sys
 from collections import *
+from scipy.stats import rankdata
+import numpy
 
 # megkapjuk a beolvasott file osszes token-et (szavat) kozpontozas nelkul
 def get_tokens_list(input_file_name):
@@ -196,9 +198,7 @@ def ngram_backoff(ngram_letter_counter,prob_tilde,n_1prob_tilde,n_2prob_tilde,n_
 
     return backoff_prob_list
 
-##############################################################################################
-
-####################if the letter occures less than 30 the letter will be *##################
+#################### REPLACE RARLY OCCURED CHARACTERS WITH * ##################
 def list_of_small_nr_of_special_char(unigram_letter_counter):
     list_char=''
     
@@ -231,13 +231,18 @@ def train_char_ngram(train_tokens_list,order,orderplus1_ngram_prob):
                 lm[history][char]=orderplus1_ngram_prob[word]
     return lm
 
-def print_train_test(train_list,test_list):
-    sorted(train_list)
-    sorted(test_list)
-    for letter in test_list:
-        print letter
-        print 'train result' + str(train_list[letter].most_common(10))
-        print 'test result' + str(test_list[letter].most_common(10))
+def convert_train_to_rank(train_ngram_prob):
+    train_rank=defaultdict(Counter)
+    
+    for keys, values in train_ngram_prob.iteritems():
+        #print values
+        train_list=[keys1 for values1,keys1 in values.items()]
+        rank_list = rankdata(train_list,method='min')
+        #print train_list
+        #print rank_list
+        for index,item in enumerate(values):
+            train_rank[keys][item]=rank_list[index]
+    return train_rank
         
 #################### TEST #######################################################
 
@@ -249,19 +254,25 @@ def test_part(test_token_list,order):
         for i in xrange(len(data)-order):
             history, char= data[i:i+order],data[i+order]
             if char != " " and not (history.startswith(" ") or history.endswith(" ")):
-                test_list[history][char] += test_token_list[data]
+                test_list[history][char] += test_token_list[word]
             
     return test_list
 
-##################### FOR PRINTING #####################################
+################################ PRINT RESULTS ################################
 
-def print_unigram_and_probs(sorted_letter_counter,ngram_unsmoothing_prob,ngram_add_one_prob,ngram_witten_bell):
-    for value,key in sorted_letter_counter:
-        value.encode('utf-8')
-        print 'unigram: {0}-{1}'.format(value,key)
-        print 'unsmoothing prob: ' + str(ngram_unsmoothing_prob[value])
-        print 'add-one smoothing prob:' + str(ngram_add_one_prob[value])
-        print 'witten-bell discounting prob: ' + str(ngram_witten_bell[value])
+def print_train_test(train_list,test_list):
+    sorted(train_list)
+    sorted(test_list)
+    
+    for letter,list in train_list.iteritems():
+        result=list.most_common(10)
+        print '~' * 80
+        print 'bigram: "' + letter +'"'
+        i=1 
+        for value, key in result:
+            print 'top'+str(i)+': "'+str(value)+'" in train corpus'
+            i += 1
+        
 
 ############################### MAIN ############################
 if __name__ == '__main__':
@@ -291,8 +302,18 @@ if __name__ == '__main__':
     train_bigram_unsmoothing = train_char_ngram(train_token_list,order,trigram_unsmoothing_prob)    
     test_bigram_unsmoothing = test_part(test_token_list,order)
     
-    print_train_test(train_bigram_unsmoothing,test_bigram_unsmoothing)
+    print convert_train_to_rank(train_bigram_unsmoothing)
     
+    #print_train_test(train_bigram_unsmoothing,test_bigram_unsmoothing)
+
+
+    #rank  = rankdata([0,2,3,2],method='min')
+    #print rank[1]
+    #array = numpy.array([0,2,3,2])
+    #temp =array.argsort()
+    #ranks=numpy.empty(len(array),int)
+    #ranks[temp]=numpy.arange(len(array))
+    #print ranks
     
     
     #print sorted(tokens_list)
