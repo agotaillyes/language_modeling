@@ -7,33 +7,23 @@ import sys
 from collections import *
 
 # megkapjuk a beolvasott file osszes token-et (szavat) kozpontozas nelkul
-def get_tokens_list(file_name):
-    tokens_list = []
+def get_tokens_list(input_file_name):
+    tokens_list = collections.defaultdict(int)
     punct = set(string.punctuation)
     '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~1234567890'
 
     letters = set('[!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~1234567890]')
 
-    with open(file_name,'r') as f:
-         for line in f:
+    with open(input_file_name,'r') as infile:
+         for line in infile:
             for word in line.split():
-                word = re.sub('[!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~1234567890]','',word)
-                if not word.startswith('-') and word != '' and not (letters & set(word)):
+                if not word.startswith('-') and word != '':
+                    word = re.sub('[!"#$%&\'()+,-./:;<=>?@[\\]^_`{|}~1234567890]','',word)
                     word = word.lower()
                     #word = unicode(word,'utf-8')
-                    tokens_list.append(word+' ')
+                    if word != '':
+                        tokens_list[word] += 1
     return tokens_list
-
-
-# megkapjuk az osszes betu szamat
-def get_all_letters_nr(tokens_list):
-    all_letters = 0
-
-    for word in tokens_list:
-        lenght = len(word)
-        all_letters += lenght
-
-    return all_letters
 
 # osszeszamolja, hogy j egymast koveto karakterbol mennyi van
 # a szovegben
@@ -44,7 +34,7 @@ def n_gram_letter_counter(j,tokens_list):
         lenght = len(word)
         i = 0
         while lenght-j+1 > i:
-            ngram_list[word[i:i+j]] += 1
+            ngram_list[word[i:i+j]] += tokens_list[word]
             i += 1
 
     return ngram_list
@@ -209,44 +199,59 @@ def ngram_backoff(ngram_letter_counter,prob_tilde,n_1prob_tilde,n_2prob_tilde,n_
 ##############################################################################################
 
 ####################if the letter occures less than 30 the letter will be *##################
-def changeSmallNrOfCharacters(ngram_letter_counter):
-    i =0
-    new_ngram_letter_counter=collections.defaultdict(int)
-    for letter in ngram_letter_counter:
-        if ngram_letter_counter[letter] <= 30:
-            i=i+ngram_letter_counter[letter]
-            ngram_letter_counter[letter]=0
-    ngram_letter_counter['*']=i
-
-    for letter in ngram_letter_counter:
-        if ngram_letter_counter[letter] > 0:
-            new_ngram_letter_counter[letter] = ngram_letter_counter[letter]
-
-    return new_ngram_letter_counter
+def list_of_small_nr_of_special_char(unigram_letter_counter):
+    list_char=''
+    
+    for letter in unigram_letter_counter:
+        if unigram_letter_counter[letter] <= 30:
+            list_char=list_char+letter
+    return list_char
+def replace_special_char_with_star(filename_in,filenam_out,special_chars):
+    data=file(filename_in).read()
+    file_out=open(filenam_out,'w')
+    i=0
+    new_data=data
+    
+    while i<len(special_chars):
+        new_data=new_data.replace(special_chars[i],'*')
+        i += 1
+    file_out.write(new_data)
 
 ########################### TRAIN #############################
-def replace_file_without_special_char(filename, unigram_letter_nr):
-    with open(filename,"a") as myfile:
-        for word in tokens_list:
-            myfile.write(word)
-
-def train_char_ngram(fname,order,orderplus1_ngram_prob):
-    data = file(fname).read()
+def train_char_ngram(train_tokens_list,order,orderplus1_ngram_prob):
     lm = defaultdict(Counter)
     i=0
 
-    for i in xrange(len(data)-order):
-        history,char =data[i:i+order],data[i+order]
-        if char != " " and not (history.startswith(" ") or history.endswith(" ")):
+    for word in train_tokens_list:
+        data = word
+        for i in xrange(len(data)-order):
+            history,char =data[i:i+order],data[i+order]
+            if char != " " and not (history.startswith(" ") or history.endswith(" ")):
                 word=history+char
                 lm[history][char]=orderplus1_ngram_prob[word]
     return lm
 
-def print_train(train_list):
+def print_train_test(train_list,test_list):
     sorted(train_list)
-    for letter in train_list:
+    sorted(test_list)
+    for letter in test_list:
         print letter
-        print str(train_list[letter].most_common(10))
+        print 'train result' + str(train_list[letter].most_common(10))
+        print 'test result' + str(test_list[letter].most_common(10))
+        
+#################### TEST #######################################################
+
+def test_part(test_token_list,order):
+    test_list=defaultdict(Counter)
+
+    for word in test_token_list:
+        data=word
+        for i in xrange(len(data)-order):
+            history, char= data[i:i+order],data[i+order]
+            if char != " " and not (history.startswith(" ") or history.endswith(" ")):
+                test_list[history][char] += test_token_list[data]
+            
+    return test_list
 
 ##################### FOR PRINTING #####################################
 
@@ -260,17 +265,44 @@ def print_unigram_and_probs(sorted_letter_counter,ngram_unsmoothing_prob,ngram_a
 
 ############################### MAIN ############################
 if __name__ == '__main__':
-    file_name = sys.argv[1]
-
-    tokens_list = get_tokens_list(file_name)
+    train_file_name_in = sys.argv[1]
+    train_file_name_out = sys.argv[2]
+    test_file_name_in=sys.argv[3]
+    test_file_name_out=sys.argv[4]
+    order = 2
+    
+    train_token_list_first=get_tokens_list(train_file_name_in)
+    
+    unigram_letter_counter = n_gram_letter_counter(1,train_token_list_first)
+    all_letters_nr = sum(unigram_letter_counter.values())
+    special_char_list = list_of_small_nr_of_special_char(unigram_letter_counter)
+    
+    replace_special_char_with_star(train_file_name_in,train_file_name_out,special_char_list)
+    
+    train_token_list=get_tokens_list(train_file_name_out)
+    
+    bigram_letter_counter = n_gram_letter_counter(order,train_token_list)
+    trigram_letter_counter = n_gram_letter_counter(3,train_token_list)
+    trigram_unsmoothing_prob = ngram_unsmoothing_prob(3,trigram_letter_counter,bigram_letter_counter,all_letters_nr)
+    
+    replace_special_char_with_star(test_file_name_in,test_file_name_out,special_char_list)
+    test_token_list = get_tokens_list(test_file_name_out)
+    
+    train_bigram_unsmoothing = train_char_ngram(train_token_list,order,trigram_unsmoothing_prob)    
+    test_bigram_unsmoothing = test_part(test_token_list,order)
+    
+    print_train_test(train_bigram_unsmoothing,test_bigram_unsmoothing)
+    
+    
+    
     #print sorted(tokens_list)
-    all_letters_nr = get_all_letters_nr(tokens_list)
+    #all_letters_nr = get_all_letters_nr(tokens_list)
     #print all_letters_nr
-    k = 11
+    #k = 11
 
     ############## UNIGRAM #################
-    unigram_letter_counter = n_gram_letter_counter(1,tokens_list)
-    letters_type = len(unigram_letter_counter)
+    #unigram_letter_counter = n_gram_letter_counter(1,tokens_list)
+    #letters_type = len(unigram_letter_counter)
 
     #sorted_unigram_letter_counter = sorted(unigram_letter_counter.iteritems(), key=lambda (k,v):v,reverse=True)
 
@@ -303,7 +335,7 @@ if __name__ == '__main__':
     #print 'bigram witten-bell discounting: ' + str(sorted(bigram_witten_bell.iteritems(),key=lambda (k,v): v,reverse=True))
 
     ############## TRIGRAM #################
-    trigram_letter_counter = n_gram_letter_counter(3,tokens_list)
+    #trigram_letter_counter = n_gram_letter_counter(3,tokens_list)
     #print trigram_letter_counter
     #print 'trigram letter counter: ' + str(sorted(trigram_letter_counter.iteritems(),key=lambda (k,v): v,reverse=True))
 
@@ -317,6 +349,8 @@ if __name__ == '__main__':
     #print 'trigram witten-bell discounting' + str(trigram_witten_bell)
     
     ########### TRAIN ###################################
-    replace_file_without_special_char("train_without.txt",tokens_list)
-    train_bigram_unsmoothing = train_char_ngram("train_without.txt",2,trigram_unsmoothing_prob)
-    print_train(train_bigram_unsmoothing)
+    #replace_file_without_special_char("train_without.txt",tokens_list)
+    #train_bigram_unsmoothing = train_char_ngram("train_without.txt",2,trigram_unsmoothing_prob)
+    #print_train(train_bigram_unsmoothing)
+    
+    
