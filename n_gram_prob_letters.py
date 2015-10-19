@@ -6,7 +6,7 @@ import re
 import sys
 from collections import *
 from scipy.stats import rankdata
-import numpy
+import os
 
 # megkapjuk a beolvasott file osszes token-et (szavat) kozpontozas nelkul
 def get_tokens_list(input_file_name):
@@ -235,13 +235,14 @@ def convert_train_to_rank(train_ngram_prob):
     train_rank=defaultdict(Counter)
     
     for keys, values in train_ngram_prob.iteritems():
-        #print values
         train_list=[keys1 for values1,keys1 in values.items()]
         rank_list = rankdata(train_list,method='min')
-        #print train_list
-        #print rank_list
+        reversed_rank_list=[]
+        for element in rank_list:
+            alma = len(rank_list)+1-element
+            reversed_rank_list.append(alma)
         for index,item in enumerate(values):
-            train_rank[keys][item]=rank_list[index]
+            train_rank[keys][item]=reversed_rank_list[index]
     return train_rank
         
 #################### TEST #######################################################
@@ -255,23 +256,38 @@ def test_part(test_token_list,order):
             history, char= data[i:i+order],data[i+order]
             if char != " " and not (history.startswith(" ") or history.endswith(" ")):
                 test_list[history][char] += test_token_list[word]
-            
     return test_list
 
 ################################ PRINT RESULTS ################################
-
-def print_train_test(train_list,test_list):
-    sorted(train_list)
-    sorted(test_list)
+def result_list(test_counter, ranked_train_counter,normalize_nr):
+    result =defaultdict(Counter)
+    normalized_result =defaultdict(Counter)
+    train_list=defaultdict(Counter)
     
-    for letter,list in train_list.iteritems():
-        result=list.most_common(10)
-        print '~' * 80
-        print 'bigram: "' + letter +'"'
-        i=1 
-        for value, key in result:
-            print 'top'+str(i)+': "'+str(value)+'" in train corpus'
-            i += 1
+    i=1
+    while i < 11:
+        result[i]=0
+        i += 1
+    
+    for ngram,test_list in test_counter.iteritems():
+        list=test_list
+        if len(ranked_train_counter[ngram]) > 10:
+            for i in xrange(len(ranked_train_counter[ngram])-10,10,1):
+                train_list[i]=ranked_train_counter[ngram][i]
+        else:
+            train_list=ranked_train_counter[ngram]
+        train_list += Counter()
+        array=[k for k,v in train_list.items()]
+        for key,value in list.items():
+            if key in array:
+                alma=value
+                for i in xrange(alma,len(result)+1,1):
+                    result[i]+=alma
+    
+    for key,value in result.items():
+        value_new =(value+0.0) / normalize_nr
+        normalized_result[key]=value_new
+    return normalized_result
         
 
 ############################### MAIN ############################
@@ -280,6 +296,7 @@ if __name__ == '__main__':
     train_file_name_out = sys.argv[2]
     test_file_name_in=sys.argv[3]
     test_file_name_out=sys.argv[4]
+    i=sys.argv[5]
     order = 2
     
     train_token_list_first=get_tokens_list(train_file_name_in)
@@ -294,6 +311,8 @@ if __name__ == '__main__':
     
     bigram_letter_counter = n_gram_letter_counter(order,train_token_list)
     trigram_letter_counter = n_gram_letter_counter(3,train_token_list)
+    all_trigrams_nr=sum(trigram_letter_counter.values())
+    #print all_trigrams_nr
     trigram_unsmoothing_prob = ngram_unsmoothing_prob(3,trigram_letter_counter,bigram_letter_counter,all_letters_nr)
     
     replace_special_char_with_star(test_file_name_in,test_file_name_out,special_char_list)
@@ -302,24 +321,16 @@ if __name__ == '__main__':
     train_bigram_unsmoothing = train_char_ngram(train_token_list,order,trigram_unsmoothing_prob)    
     test_bigram_unsmoothing = test_part(test_token_list,order)
     
-    print convert_train_to_rank(train_bigram_unsmoothing)
+    ranked_train = convert_train_to_rank(train_bigram_unsmoothing)
+    #print ranked_train
+    result= result_list(test_bigram_unsmoothing,ranked_train,all_trigrams_nr)
+    print '~' * 80
+    print 'bigram unsmoothing probability'
+    print 'train'+str(i)+' corpus size: ' + str(os.path.getsize(train_file_name_out))+' bytes'
+    print 'test'+str(i)+' corpus size: ' + str(os.path.getsize(test_file_name_out))+' bytes'
+    for key,value in result.items():
+        print 'top' +str(key)+': ' + str(value)+'%'
     
-    #print_train_test(train_bigram_unsmoothing,test_bigram_unsmoothing)
-
-
-    #rank  = rankdata([0,2,3,2],method='min')
-    #print rank[1]
-    #array = numpy.array([0,2,3,2])
-    #temp =array.argsort()
-    #ranks=numpy.empty(len(array),int)
-    #ranks[temp]=numpy.arange(len(array))
-    #print ranks
-    
-    
-    #print sorted(tokens_list)
-    #all_letters_nr = get_all_letters_nr(tokens_list)
-    #print all_letters_nr
-    #k = 11
 
     ############## UNIGRAM #################
     #unigram_letter_counter = n_gram_letter_counter(1,tokens_list)
@@ -373,5 +384,4 @@ if __name__ == '__main__':
     #replace_file_without_special_char("train_without.txt",tokens_list)
     #train_bigram_unsmoothing = train_char_ngram("train_without.txt",2,trigram_unsmoothing_prob)
     #print_train(train_bigram_unsmoothing)
-    
     
