@@ -52,10 +52,16 @@ def ngram_unsmoothing_prob(i,ngram_letter_counter,n_1gram_letter_counter,all_let
         return ngram_prob_list
     else:
         for ngram in ngram_letter_counter:
+            #print ngram
+            #print ngram[0:i-1]
             if n_1gram_letter_counter[ngram[0:i-1]] != 0:
+                #print ngram_letter_counter[ngram]
+                #print n_1gram_letter_counter[ngram[0:i-1]]
                 ngram_prob_list[ngram] = (ngram_letter_counter[ngram]+0.0) / n_1gram_letter_counter[ngram[0:i-1]]
+                #print ngram_prob_list[ngram]
             else:
                 ngram_prob_list[ngram] = 0.0
+            #print '~'*80
         return ngram_prob_list
 ######################################################################
 
@@ -70,6 +76,11 @@ def ngram_add_one_prob(i,ngram_letter_counter,n_1gram_letter_counter,all_letters
         return ngram_prob_list
     else:
         for ngram in ngram_letter_counter:
+            #print ngram
+            #print ngram[0:i-1]
+            #print ngram_letter_counter[ngram]
+            #print n_1gram_letter_counter[ngram[0:i-1]]
+            #print letters_types
             ngram_prob_list[ngram] = (ngram_letter_counter[ngram]+1.0) / (n_1gram_letter_counter[ngram[0:i-1]]+letters_types)
         return ngram_prob_list
 ########################################################################
@@ -267,17 +278,22 @@ def replace_special_char_with_star(filename_in,filenam_out,special_chars):
     file_out.write(new_data)
 
 ########################### TRAIN #############################
-def train_char_ngram(train_tokens_list,order,orderplus1_ngram_prob):
+def train_char_ngram(ngram_letter_counter,order,orderplus1_ngram_prob):
     lm = defaultdict(Counter)
-    i=0
 
-    for word in train_tokens_list:
+    for word in ngram_letter_counter:
+        #print word
         data = word
-        for i in xrange(len(data)-order):
-            history,char =data[i:i+order],data[i+order]
-            if char != " " and not (history.startswith(" ") or history.endswith(" ")):
-                word=history+char
-                lm[history][char]=orderplus1_ngram_prob[word]
+        #print '~'*80
+        history,char =data[0:order],data[order]
+        #print history
+        #print char
+        if char != " " and not (history.startswith(" ") or history.endswith(" ")):                
+            word=history+char
+            lm[history][char]=orderplus1_ngram_prob[word]
+            #print word
+            #print lm[history][char]
+        #print '~'*80
     return lm
 
 def convert_train_to_rank(train_ngram_prob):
@@ -296,15 +312,21 @@ def convert_train_to_rank(train_ngram_prob):
         
 #################### TEST #######################################################
 
-def test_part(test_token_list,order):
+def test_part(ngram_letter_counter,order):
     test_list=defaultdict(Counter)
 
-    for word in test_token_list:
+    for word in ngram_letter_counter:
         data=word
-        for i in xrange(len(data)-order):
-            history, char= data[i:i+order],data[i+order]
-            if char != " " and not (history.startswith(" ") or history.endswith(" ")):
-                test_list[history][char] += test_token_list[word]
+        #print '~'*80
+        history, char= data[0:order],data[order]
+        #print history
+        #print char
+        if char != " " and not (history.startswith(" ") or history.endswith(" ")):
+            alma=history+char
+            test_list[history][char] = ngram_letter_counter[alma]
+            #print alma
+            #print test_list[history][char]
+        #print '~'*80
     return test_list
 
 ################################ PRINT RESULTS ################################
@@ -354,7 +376,7 @@ if __name__ == '__main__':
     test_file_name_in=sys.argv[3]
     test_file_name_out=sys.argv[4]
     i=sys.argv[5]
-    order = 3
+    order = 2
     
     train_token_list_first=get_tokens_list(train_file_name_in)
     
@@ -373,76 +395,123 @@ if __name__ == '__main__':
     
     #bigram_test_letter_counter = n_gram_letter_counter(2,test_token_list)
     #trigram_test_letter_counter = n_gram_letter_counter(3,test_token_list)
-    fourgram_test_letter_counter = n_gram_letter_counter(4,test_token_list)
+    #fourgram_test_letter_counter = n_gram_letter_counter(4,test_token_list)
+
+    token_list =get_tokens_list(train_file_name_out)
     
     unigram_letter_counter = n_gram_letter_counter(1,train_token_list)
+    all_letters_nr = sum(unigram_letter_counter.values())
     letters_type = len(unigram_letter_counter)
     bigram_letter_counter = n_gram_letter_counter(2,train_token_list)
     trigram_letter_counter = n_gram_letter_counter(3,train_token_list)
     fourgram_letter_counter = n_gram_letter_counter(4,train_token_list)
-    fifthgram_letter_counter = n_gram_letter_counter(5,train_token_list)
+    #fifthgram_letter_counter = n_gram_letter_counter(5,train_token_list)
     
     #unigram_star = c_star(unigram_letter_counter)
     bigram_star = c_star(bigram_letter_counter)
     trigram_star = c_star(trigram_letter_counter)
     fourgram_star = c_star(fourgram_letter_counter)
-    fifthgram_star = c_star(fifthgram_letter_counter)
+    #fifthgram_star = c_star(fifthgram_letter_counter)
     
     #all_train_bigrams_nr=sum(bigram_letter_counter.values())
     #all_train_trigram_nr=sum(trigram_letter_counter.values())
-    all_train_fourgram_nr=sum(fourgram_letter_counter.values())
+    #all_train_fourgram_nr=sum(fourgram_letter_counter.values())
     
     #bigram_unsmoothing_prob = ngram_unsmoothing_prob(2,bigram_letter_counter,unigram_letter_counter,all_letters_nr)
+    #print bigram_unsmoothing_prob
     bigram_witten_bell = ngram_witten_bell_prob(2,bigram_letter_counter,unigram_letter_counter)
     #bigram_add_one_prob = ngram_add_one_prob(2,bigram_letter_counter,unigram_letter_counter,all_letters_nr,letters_type)  
     #trigram_unsmoothing = ngram_unsmoothing_prob(3,trigram_letter_counter,bigram_letter_counter,all_letters_nr)
+    #print sorted(trigram_unsmoothing.iteritems(),key=lambda (k,v):v,reverse=True)
     trigram_witten_bell = ngram_witten_bell_prob(3,trigram_letter_counter,bigram_letter_counter)
-    #trigram_add_one_prob = ngram_add_one_prob(3,trigram_letter_counter,unigram_letter_counter,all_letters_nr,letters_type)
+    #print sorted(trigram_witten_bell.iteritems(),key=lambda (k,v):v,reverse=True)
+    #trigram_add_one_prob = ngram_add_one_prob(3,trigram_letter_counter,bigram_letter_counter,all_letters_nr,letters_type)
+    #print sorted(trigram_add_one_prob.iteritems(),key=lambda (k,v):v,reverse=True)
+    #fourgram_unsmoothing = ngram_unsmoothing_prob(4,fourgram_letter_counter,trigram_letter_counter,all_letters_nr)
     fourgram_witten_bell = ngram_witten_bell_prob(4,fourgram_letter_counter,trigram_letter_counter)
-    fifth_witten_bell = ngram_witten_bell_prob(5,fifthgram_letter_counter,fourgram_letter_counter)
+    #fourgram_add_one_prob = ngram_add_one_prob(4,fourgram_letter_counter,trigram_letter_counter,all_letters_nr,letters_type)
+    #fifth_witten_bell = ngram_witten_bell_prob(5,fifthgram_letter_counter,fourgram_letter_counter)
     
     unigram_prob_tilde = unigram_prob_tilde(unigram_letter_counter,all_letters_nr)
     bigram_prob_tilde = prob_tilde(bigram_letter_counter,unigram_letter_counter,bigram_witten_bell,tokens_nr,all_letters_nr,bigram_star)
     trigram_prob_tilde = prob_tilde(trigram_letter_counter,bigram_letter_counter,trigram_witten_bell,tokens_nr,all_letters_nr,trigram_star)
     fourgram_prob_tilde = prob_tilde(fourgram_letter_counter,trigram_letter_counter,fourgram_witten_bell,tokens_nr,all_letters_nr,fourgram_star)
-    fifth_prob_tilde = prob_tilde(fifthgram_letter_counter,fourgram_letter_counter,fifth_witten_bell,tokens_nr,all_letters_nr,fifthgram_star)
+    #fifth_prob_tilde = prob_tilde(fifthgram_letter_counter,fourgram_letter_counter,fifth_witten_bell,tokens_nr,all_letters_nr,fifthgram_star)
     
     unigram_alpha = alpha(unigram_prob_tilde,bigram_prob_tilde,unigram_letter_counter,bigram_letter_counter)
     bigram_alpha = alpha(bigram_prob_tilde,trigram_prob_tilde,bigram_letter_counter,trigram_letter_counter)
     trigram_alpha = alpha(trigram_prob_tilde,fourgram_prob_tilde,trigram_letter_counter,bigram_letter_counter)
-    fourgram_alpha = alpha(fourgram_prob_tilde,fifth_prob_tilde,fourgram_letter_counter,trigram_letter_counter)
-    
+    #fourgram_alpha = alpha(fourgram_prob_tilde,fifth_prob_tilde,fourgram_letter_counter,trigram_letter_counter)
+
     #bigram_backoff_prob=bigram_backoff(bigram_letter_counter,unigram_letter_counter,bigram_prob_tilde,unigram_alpha,all_letters_nr)
-    trigram_backoff_prob=trigram_backoff(trigram_letter_counter,bigram_letter_counter,unigram_letter_counter,trigram_prob_tilde,fourgram_prob_tilde,bigram_alpha,unigram_alpha,all_letters_nr)
+    trigram_backoff_prob=trigram_backoff(trigram_letter_counter,bigram_letter_counter,unigram_letter_counter,trigram_prob_tilde,bigram_prob_tilde,bigram_alpha,unigram_alpha,all_letters_nr)
+    #print sorted(trigram_backoff_prob.iteritems(),key=lambda (k,v):v,reverse=True)
     four_backoff_prob = four_backoff(fourgram_letter_counter,fourgram_prob_tilde,trigram_backoff_prob,trigram_alpha)
-    fifth_backoff_prob = fifth_backoff(fifthgram_letter_counter,fifth_prob_tilde,four_backoff,fourgram_alpha)
+    #fifth_backoff_prob = fifth_backoff(fifthgram_letter_counter,fifth_prob_tilde,four_backoff,fourgram_alpha)
     
-    #train_unigram_witten_bell = train_char_ngram(train_token_list,order,bigram_witten_bell)    
-    #test_unigram_witten_bell = test_part(test_token_list,order)   
-    #train_unigram_add_one = train_char_ngram(train_token_list,order,bigram_add_one_prob)    
-    #test_unigram_add_one = test_part(test_token_list,order) 
-    #train_bigram_unsmoothing = train_char_ngram(train_token_list,order,trigram_unsmoothing)
-    #test_bigram_unsmoothing = test_part(test_token_list,order)
-    train_trigram_backoff = train_char_ngram(train_token_list,order,four_backoff_prob)
-    test_trigram_backoff = test_part(test_token_list,order)
-    #train_bigram_backoff = train_char_ngram(train_token_list,order,trigram_backoff_prob)
-    #test_bigram_backoff = test_part(test_token_list,order) 
+    #train_unigram_unsmoothing = train_char_ngram(bigram_letter_counter,1,bigram_unsmoothing_prob)    
+    #test_unigram_unsmoothing = test_part(bigram_letter_counter,1)   
+    #train_unigram_witten_bell = train_char_ngram(bigram_letter_counter,1,bigram_witten_bell)    
+    #test_unigram_witten_bell = test_part(bigram_letter_counter,1)   
+    #train_unigram_add_one = train_char_ngram(bigram_letter_counter,1,bigram_add_one_prob)    
+    #test_unigram_add_one = test_part(bigram_letter_counter,1) 
+    #train_unigram_backoff = train_char_ngram(bigram_letter_counter,1,bigram_backoff_prob)    
+    #test_unigram_backoff = test_part(bigram_letter_counter,1) 
+    #train_bigram_unsmoothing = train_char_ngram(trigram_letter_counter,2,trigram_unsmoothing)
+    #test_bigram_unsmoothing = test_part(trigram_letter_counter,2)
+    train_trigram_backoff = train_char_ngram(fourgram_letter_counter,3,four_backoff_prob)
+    test_trigram_backoff = test_part(fourgram_letter_counter,3)
+    #train_trigram_witten_bell = train_char_ngram(fourgram_letter_counter,3,fourgram_witten_bell)
+    #test_trigram_witten_bell = test_part(fourgram_letter_counter,3)
+    #train_trigram_add_one = train_char_ngram(fourgram_letter_counter,3,fourgram_add_one_prob)
+    #test_trigram_add_one = test_part(fourgram_letter_counter,3)
+    #train_bigram_backoff = train_char_ngram(trigram_letter_counter,2,trigram_backoff_prob)
+    #test_bigram_backoff = test_part(trigram_letter_counter,2) 
+    #train_bigram_witten_bell = train_char_ngram(trigram_letter_counter,2,trigram_witten_bell)
+    #test_bigram_witten_bell = test_part(trigram_letter_counter,2)
+    #train_bigram_add_one = train_char_ngram(trigram_letter_counter,2,trigram_add_one_prob)
+    #test_bigram_add_one = test_part(trigram_letter_counter,2)
+    #train_trigram_unsmoothing = train_char_ngram(fourgram_letter_counter,3,fourgram_unsmoothing)
+    #test_trigram_unsmoothing = test_part(fourgram_letter_counter,3)
+    #print sorted(train_bigram_witten_bell.iteritems(),key=lambda (k,v):v,reverse=True)
+    #print sorted(test_bigram_add_one.iteritems(),key=lambda (k,v):v,reverse=True)
     
+    #ranked_train = convert_train_to_rank(train_unigram_unsmoothing)
     #ranked_train = convert_train_to_rank(train_unigram_witten_bell)
     #ranked_train = convert_train_to_rank(train_unigram_add_one)
-    #ranked_train = convert_train_to_rank(train_bigram_unsmoothing)
+    #ranked_train = convert_train_to_rank(train_unigram_backoff)
     #ranked_train = convert_train_to_rank(train_bigram_backoff)
+    #ranked_train = convert_train_to_rank(train_bigram_backoff)
+    #ranked_train = convert_train_to_rank(train_bigram_add_one)
+    #ranked_train = convert_train_to_rank(train_bigram_witten_bell)
+    #ranked_train = convert_train_to_rank(train_trigram_witten_bell)
+    #ranked_train = convert_train_to_rank(train_trigram_add_one)
+    #ranked_train = convert_train_to_rank(train_trigram_unsmoothing)
     ranked_train = convert_train_to_rank(train_trigram_backoff)
-    #print ranked_train
+    #print sorted(ranked_train.iteritems(),key=lambda (k,v):v,reverse=True)
 
+    #all_train_bigrams_nr = sum(bigram_letter_counter.values())
+    #all_train_trigram_nr = sum(trigram_letter_counter.values())
+    all_train_fourgrams_nr = sum(fourgram_letter_counter.values())
+    
+    #bigram_test_letter_counter = sum(bigram_letter_counter.values())
+    #trigram_test_letter_counter = sum(trigram_letter_counter.values())
+    fourgram_test_letter_counter = sum(fourgram_letter_counter.values())
+    
+    #result= result_list(test_unigram_unsmoothing,ranked_train,all_train_bigrams_nr)
     #result= result_list(test_unigram_witten_bell,ranked_train,all_train_bigrams_nr)
     #result= result_list(test_unigram_add_one,ranked_train,all_train_bigrams_nr)
+    #result= result_list(test_unigram_backoff,ranked_train,all_train_bigrams_nr)
     #result= result_list(test_bigram_backoff,ranked_train,all_train_trigram_nr)
-    result= result_list(test_trigram_backoff,ranked_train,all_train_fourgram_nr)
+    #result= result_list(test_trigram_witten_bell,ranked_train,all_train_fourgrams_nr)
+    #result= result_list(test_trigram_add_one,ranked_train,all_train_fourgrams_nr)
+    #result= result_list(test_bigram_backoff,ranked_train,all_train_trigram_nr)
+    #result= result_list(test_trigram_unsmoothing,ranked_train,all_train_fourgrams_nr)
+    result= result_list(test_trigram_backoff,ranked_train,all_train_fourgrams_nr)
 
     print '~' * 80
     print 'fourgram backoff probability'
-    print 'train'+str(i)+' character number: ' + str(all_train_fourgram_nr*4)
-    print 'test'+str(i)+' character number: ' + str(sum(fourgram_test_letter_counter.values())*4)
+    print 'train'+str(i)+' character number: ' + str(all_train_fourgrams_nr*4)
+    print 'test'+str(i)+' character number: ' + str(fourgram_test_letter_counter*4)
     for key,value in result.items():
         print 'top' +str(key)+': ' + str(value)+'%'
