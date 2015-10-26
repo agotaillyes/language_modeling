@@ -142,7 +142,7 @@ def ngram_witten_bell_prob(i,ngram_letter_counter,n_1gram_letter_counter):
     if i != 1:
         for ngram in ngram_letter_counter:
             list = ngram.split()
-            n_1gram=list[0]
+            n_1gram=lsit[0]
             if ngram_letter_counter[ngram] == 0:
                 n_1gram_z_list[n_1gram] += 1
 
@@ -319,7 +319,6 @@ def fifth_backoff(fifthgram_letter_counter,prob_tilde,four_backoff,fourgram_alph
             fifth_backoff[ngram]=(0.0+fourgram_alpha)*four_backoff[ngram[1:]]
     return 
 
-
 ########################### TRAIN #############################
 def train_char_ngram(ngram_word_prob,order,orderplus1_ngram_prob):
     lm = defaultdict(Counter)
@@ -492,21 +491,21 @@ if __name__ == '__main__':
     bigram_count_test = convert_ngram(bigram_counter_test)
     bigram_word_counter_test=n_gram_word_counter(2,bigram_count_test,test_token_list)
     
-    bigram_witten_bell = ngram_witten_bell_prob(2,bigram_word_counter_train,unigram_word_counter_train)
-   
-    train_unigram_witten_bell = train_char_ngram(bigram_witten_bell,1,bigram_witten_bell)    
-    test_unigram_witten_bell = test_part(bigram_word_counter_test,1)   
-   
-    ranked_train = convert_train_to_rank(train_unigram_witten_bell)
-   
+    bigram_add_one_prob = ngram_add_one_prob(2,bigram_word_counter_train,unigram_word_counter_train,all_word_nr,word_type)
+
+    train_unigram_add_one = train_char_ngram(bigram_add_one_prob,1,bigram_add_one_prob)    
+    test_unigram_add_one = test_part(bigram_word_counter_test,1) 
+
+    ranked_train = convert_train_to_rank(train_unigram_add_one)
+
     all_train_bigrams_nr = sum(train_token_list.values())
     bigram_test_letter_counter = sum(test_token_list.values())
-   
-    result= result_list(test_unigram_witten_bell,ranked_train,all_train_bigrams_nr)
-   
+    
+    result= result_list(test_unigram_add_one,ranked_train,all_train_bigrams_nr)
+
     print '~' * 80
-    print 'bigram witten-bell probability'
-    print 'train'+str(i)+' word number: ' + str(all_train_bigrams_nr)
-    print 'test'+str(i)+' word number: ' + str(bigram_test_letter_counter)
+    print 'bigram add-one probability'
+    print 'train'+str(i)+' character number: ' + str(all_train_bigrams_nr)
+    print 'test'+str(i)+' character number: ' + str(bigram_test_letter_counter)
     for key,value in result.items():
         print 'top' +str(key)+': ' + str(value)+'%'

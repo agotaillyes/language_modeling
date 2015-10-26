@@ -319,25 +319,6 @@ def fifth_backoff(fifthgram_letter_counter,prob_tilde,four_backoff,fourgram_alph
             fifth_backoff[ngram]=(0.0+fourgram_alpha)*four_backoff[ngram[1:]]
     return 
 
-#################### REPLACE RARLY OCCURED CHARACTERS WITH * ##################
-def list_of_small_nr_of_special_char(unigram_word_counter):
-    list_char=''
-    
-    for letter in unigram_word_counter:
-        if unigram_word_counter[letter] <= 30:
-            list_char=list_char+letter
-    return list_char
-def replace_special_char_with_star(filename_in,filenam_out,special_chars):
-    data=file(filename_in).read()
-    file_out=open(filenam_out,'w')
-    i=0
-    new_data=data
-    
-    while i<len(special_chars):
-        new_data=new_data.replace(special_chars[i],'*')
-        i += 1
-    file_out.write(new_data)
-
 ########################### TRAIN #############################
 def train_char_ngram(ngram_word_prob,order,orderplus1_ngram_prob):
     lm = defaultdict(Counter)
@@ -373,6 +354,26 @@ def convert_train_to_rank(train_ngram_prob):
         for index,item in enumerate(values):
             train_rank[keys][item]=reversed_rank_list[index]
     return train_rank
+
+def list_of_small_nr_of_word(unigram_word_counter_train):
+    list_word = []
+    
+    for word,value in unigram_word_counter_train.iteritems():
+        if value == 1:
+            list_word.append(word)
+    return list_word
+def replace_special_char_with_star(filename_in,filenam_out,rar_words):
+    data=file(filename_in).read()
+    file_out=open(filenam_out,'w')
+    i=0
+    new_data=data
+    
+    while i<len(rar_words):
+        new_data=new_data.replace(rar_words[i],'_RARE_')
+        #print new_data
+        #print rar_words[i]
+        i += 1
+    file_out.write(new_data)
         
 #################### TEST #######################################################
 
@@ -390,6 +391,15 @@ def test_part(ngram_letter_counter,order):
             #print alma
             #print test_list[history][char]
     return test_list
+
+def list_of_oov_words(train_token_list,test_token_list):
+    list_words=[]
+    
+    for ngram in test_token_list:
+        if ngram not in train_token_list:
+            list_words.append(ngram)
+            
+    return list_words
 
 ################################ PRINT RESULTS ################################
 def result_list(test_counter, ranked_train_counter,normalize_nr):
@@ -434,33 +444,57 @@ def result_list(test_counter, ranked_train_counter,normalize_nr):
 ############################### MAIN ############################
 if __name__ == '__main__':
     train_file_name_in = sys.argv[1]
-    train_file_name_out = sys.argv[2]
-    test_file_name_in=sys.argv[3]
-    test_file_name_out=sys.argv[4]
-    i=sys.argv[5]
+    train_file_name_out1 = sys.argv[2]
+    train_file_name_out2=sys.argv[3]
+    train_file_name_out3=sys.argv[4]
+    test_file_name_in=sys.argv[5]
+    test_file_name_out1=sys.argv[6]
+    test_file_name_out2=sys.argv[7]
+    test_file_name_out3=sys.argv[8]
+    i=sys.argv[9]
         
-    train_token_list=get_tokens_list(train_file_name_in,train_file_name_out)
-    test_token_list=get_tokens_list(test_file_name_in,test_file_name_out)
+    train_token_list_first=get_tokens_list(train_file_name_in,train_file_name_out1)
+    test_token_list_first=get_tokens_list(test_file_name_in,test_file_name_out1)
     
-    with open(train_file_name_out,"r") as myfile:
-        data=myfile.read()
-    words = re.findall("\w+",data)
+    unigram_word_counter_train_first = train_token_list_first
+    rar_words = list_of_small_nr_of_word(unigram_word_counter_train_first)
+    #print sorted(rar_words)
+    #print sorted(unigram_word_counter_train.iteritems(),key=lambda (k,v):v,reverse=True)
+    replace_special_char_with_star(train_file_name_out1,train_file_name_out2,rar_words)
+    train_token_list=get_tokens_list(train_file_name_out2,train_file_name_out3)
+    
+    lit_of_oov_in_test_file = list_of_oov_words(train_token_list,test_token_list_first)
+    replace_special_char_with_star(test_file_name_out1,test_file_name_out2,lit_of_oov_in_test_file)
+    test_token_list=get_tokens_list(test_file_name_out2,test_file_name_out3)
     
     tokens_nr = sum(train_token_list.values())
+    unigram_word_counter_train = train_token_list
+    #print sorted(test_token_list.iteritems(),key=lambda (k,v):v,reverse=True)
     
-    unigram_word_counter = train_token_list 
-    all_word_nr = sum(unigram_word_counter.values())
+    all_word_nr = sum(unigram_word_counter_train.values())
     
-    word_type = len(unigram_word_counter)
+    word_type = len(unigram_word_counter_train)
     
-    bigram_counter = Counter(ngram(words,2))
-    bigram_count = convert_ngram(bigram_counter)
-    bigram_word_counter=n_gram_word_counter(2,bigram_count,train_token_list)
+    with open(train_file_name_out3,"r") as myfile:
+        data=myfile.read()
+    words_train = re.findall("\w+",data)
     
-    bigram_add_one_prob = ngram_add_one_prob(2,bigram_word_counter,unigram_word_counter,all_word_nr,word_type)
+    bigram_counter_train = Counter(ngram(words_train,2))
+    bigram_count_train = convert_ngram(bigram_counter_train)
+    bigram_word_counter_train=n_gram_word_counter(2,bigram_count_train,train_token_list)
+    
+    with open(test_file_name_out3,"r") as myfile:
+        data=myfile.read()
+    words_test = re.findall("\w+",data)
+    
+    bigram_counter_test = Counter(ngram(words_test,2))
+    bigram_count_test = convert_ngram(bigram_counter_test)
+    bigram_word_counter_test=n_gram_word_counter(2,bigram_count_test,test_token_list)
+    
+    bigram_add_one_prob = ngram_add_one_prob(2,bigram_word_counter_train,unigram_word_counter_train,all_word_nr,word_type)
 
     train_unigram_add_one = train_char_ngram(bigram_add_one_prob,1,bigram_add_one_prob)    
-    test_unigram_add_one = test_part(bigram_word_counter,1) 
+    test_unigram_add_one = test_part(bigram_word_counter_test,1) 
 
     ranked_train = convert_train_to_rank(train_unigram_add_one)
 
@@ -471,7 +505,7 @@ if __name__ == '__main__':
 
     print '~' * 80
     print 'bigram add-one probability'
-    print 'train'+str(i)+' character number: ' + str(all_train_bigrams_nr)
-    print 'test'+str(i)+' character number: ' + str(bigram_test_letter_counter)
+    print 'train'+str(i)+' word number: ' + str(all_train_bigrams_nr)
+    print 'test'+str(i)+' word number: ' + str(bigram_test_letter_counter)
     for key,value in result.items():
         print 'top' +str(key)+': ' + str(value)+'%'

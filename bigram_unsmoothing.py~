@@ -142,7 +142,7 @@ def ngram_witten_bell_prob(i,ngram_letter_counter,n_1gram_letter_counter):
     if i != 1:
         for ngram in ngram_letter_counter:
             list = ngram.split()
-            n_1gram=list[0]
+            n_1gram=lsit[0]
             if ngram_letter_counter[ngram] == 0:
                 n_1gram_z_list[n_1gram] += 1
 
@@ -223,7 +223,7 @@ def ngram_good_turing_discounting(ngram_occuring_list,k):
 def unigram_prob_tilde(ungram_letter_counter,all_letters_nr):
     unigram_prob_tilde_list = collections.defaultdict(int)
     
-    for ngram,value in unigram_word_counter.items():
+    for ngram,value in unigram_word_counter_train.items():
         unigram_prob_tilde_list[ngram]=value/all_letters_nr
     
     return unigram_prob_tilde_list
@@ -271,7 +271,7 @@ def alpha(prob_tilde_list,prob_plus1tilde_list,ngram_letter_counter,n_plus1_gram
 
     return alpha
 
-def bigram_backoff(bigram_word_counter,unigram_word_counter,prob_tilde,alpha_n_1gram,all_letter_nr):
+def bigram_backoff(bigram_word_counter,unigram_word_counter_train,prob_tilde,alpha_n_1gram,all_letter_nr):
     backoff_prob_list = collections.defaultdict(int)
 
     for ngram,value in bigram_word_counter.items():
@@ -280,11 +280,11 @@ def bigram_backoff(bigram_word_counter,unigram_word_counter,prob_tilde,alpha_n_1
         else:
             list=ngram.split()
             unigram=[1]
-            backoff_prob_list[ngram]=alpha_n_1gram * unigram_word_counter[unigram] / (0.0+all_letter_nr)
+            backoff_prob_list[ngram]=alpha_n_1gram * unigram_word_counter_train[unigram] / (0.0+all_letter_nr)
 
     return backoff_prob_list
 
-def trigram_backoff(trigram_letter_counter,bigram_word_counter,unigram_word_counter,prob_tilde,prob_1tilde,bigram_alpha,unigram_alpha,all_leters_nr):
+def trigram_backoff(trigram_letter_counter,bigram_word_counter,unigram_word_counter_train,prob_tilde,prob_1tilde,bigram_alpha,unigram_alpha,all_leters_nr):
     trigram_backoff=collections.defaultdict(int)
     
     for ngram, value in trigram_letter_counter.items():
@@ -296,7 +296,7 @@ def trigram_backoff(trigram_letter_counter,bigram_word_counter,unigram_word_coun
         elif bigram_word_counter[bigram] >0 :
             trigram_backoff[ngram]=bigram_alpha*(0.0+prob_1tilde[ngram[1:]])
         else:
-            trigram_backoff[ngram]=unigram_alpha*(0.0+ unigram_word_counter[unigram]/all_letters_nr)
+            trigram_backoff[ngram]=unigram_alpha*(0.0+ unigram_word_counter_train[unigram]/all_letters_nr)
     return trigram_backoff
 
 def four_backoff(four_gram_letter_counter,prob_tilde,trigram_backoff,trigram_alpha):
@@ -318,7 +318,6 @@ def fifth_backoff(fifthgram_letter_counter,prob_tilde,four_backoff,fourgram_alph
         else:
             fifth_backoff[ngram]=(0.0+fourgram_alpha)*four_backoff[ngram[1:]]
     return 
-
 
 ########################### TRAIN #############################
 def train_char_ngram(ngram_word_prob,order,orderplus1_ngram_prob):
@@ -401,6 +400,7 @@ def list_of_oov_words(train_token_list,test_token_list):
             list_words.append(ngram)
             
     return list_words
+            
 
 ################################ PRINT RESULTS ################################
 def result_list(test_counter, ranked_train_counter,normalize_nr):
@@ -491,22 +491,23 @@ if __name__ == '__main__':
     bigram_counter_test = Counter(ngram(words_test,2))
     bigram_count_test = convert_ngram(bigram_counter_test)
     bigram_word_counter_test=n_gram_word_counter(2,bigram_count_test,test_token_list)
+
+    bigram_unsmoothing_prob = ngram_unsmoothing_prob(2,bigram_word_counter_train,unigram_word_counter_train,tokens_nr)
     
-    bigram_witten_bell = ngram_witten_bell_prob(2,bigram_word_counter_train,unigram_word_counter_train)
-   
-    train_unigram_witten_bell = train_char_ngram(bigram_witten_bell,1,bigram_witten_bell)    
-    test_unigram_witten_bell = test_part(bigram_word_counter_test,1)   
-   
-    ranked_train = convert_train_to_rank(train_unigram_witten_bell)
-   
+    train_unigram_unsmoothing = train_char_ngram(bigram_unsmoothing_prob,1,bigram_unsmoothing_prob)    
+    test_unigram_unsmoothing = test_part(bigram_word_counter_test,1)   
+    
+    ranked_train = convert_train_to_rank(train_unigram_unsmoothing)
+
     all_train_bigrams_nr = sum(train_token_list.values())
+    
     bigram_test_letter_counter = sum(test_token_list.values())
-   
-    result= result_list(test_unigram_witten_bell,ranked_train,all_train_bigrams_nr)
-   
+    
+    result= result_list(test_unigram_unsmoothing,ranked_train,all_train_bigrams_nr)
+
     print '~' * 80
-    print 'bigram witten-bell probability'
-    print 'train'+str(i)+' word number: ' + str(all_train_bigrams_nr)
-    print 'test'+str(i)+' word number: ' + str(bigram_test_letter_counter)
+    print 'bigram unsmoothing probability'
+    print 'train'+str(i)+' character number: ' + str(all_train_bigrams_nr)
+    print 'test'+str(i)+' character number: ' + str(bigram_test_letter_counter)
     for key,value in result.items():
         print 'top' +str(key)+': ' + str(value)+'%'
