@@ -193,31 +193,6 @@ def c_star(ngram_letter_counter):
         else:
             c_star[ngram] = value * tokens_nr /(0.0+tokens_nr+wached_types_nr)
     return c_star
-            
-#############################################################################################
-
-############################ GOOD-TURING DISCOUNTING ##################################
-
-# az occuring listbe szamolja, hogy az hany darab ngram van x elofordulassal
-def ngram_occuring_list(ngram_letter_counter,k):
-    occuring_list = collections.defaultdict(int)
-
-    for x in range(0,k):
-        for ngram in ngram_letter_counter:
-            if(ngram_letter_counter[ngram] == x):
-                occuring_list[x] += 1
-    return occuring_list
-
-def ngram_good_turing_discounting(ngram_occuring_list,k):
-    smoothed_count_c_list = collections.defaultdict(int)
-
-    for x in range(0,k-1):
-        if ngram_occuring_list[x] != 0:
-            smoothed_count_c_list[x] = (x+1.00)*ngram_occuring_list[x+1]/ngram_occuring_list[x]
-        else:
-            smoothed_count_c_list[x] = 0.0
-    return smoothed_count_c_list
-########################################################################################
 
 ######################################## BACKOFF##########################################
 def unigram_prob_tilde(ungram_letter_counter,all_letters_nr):
@@ -356,24 +331,20 @@ def convert_train_to_rank(train_ngram_prob):
     return train_rank
 
 def list_of_small_nr_of_word(unigram_word_counter_train):
-    list_word = []
+    list_word = set()
     
     for word,value in unigram_word_counter_train.iteritems():
         if value == 1:
-            list_word.append(word)
+            list_word.add(word)
     return list_word
-def replace_special_char_with_star(filename_in,filenam_out,rar_words):
-    data=file(filename_in).read()
-    file_out=open(filenam_out,'w')
-    i=0
-    new_data=data
+def replace_special_char_with_star(filename_in,filenam_out,rare_words):
     
-    while i<len(rar_words):
-        new_data=new_data.replace(rar_words[i],'_RARE_')
-        #print new_data
-        #print rar_words[i]
-        i += 1
-    file_out.write(new_data)
+    with open(filename_in,'r') as infile, open(filenam_out,'w') as outfile:
+         for line in infile:
+            for word in line.split():
+                if word in rare_words:
+                    word = '_RARE_'
+                outfile.write(word+' ')
         
 #################### TEST #######################################################
 
@@ -393,11 +364,11 @@ def test_part(ngram_letter_counter,order):
     return test_list
 
 def list_of_oov_words(train_token_list,test_token_list):
-    list_words=[]
+    list_words=set()
     
     for ngram in test_token_list:
         if ngram not in train_token_list:
-            list_words.append(ngram)
+            list_words.add(ngram)
             
     return list_words
             
@@ -452,7 +423,6 @@ if __name__ == '__main__':
     test_file_name_out1=sys.argv[6]
     test_file_name_out2=sys.argv[7]
     test_file_name_out3=sys.argv[8]
-    i=sys.argv[9]
         
     train_token_list_first=get_tokens_list(train_file_name_in,train_file_name_out1)
     test_token_list_first=get_tokens_list(test_file_name_in,test_file_name_out1)
@@ -507,7 +477,7 @@ if __name__ == '__main__':
 
     print '~' * 80
     print 'bigram unsmoothing probability'
-    print 'train'+str(i)+' word number: ' + str(all_train_bigrams_nr)
-    print 'test'+str(i)+' word number: ' + str(bigram_test_letter_counter)
+    print 'train word number: ' + str(all_train_bigrams_nr)
+    print 'test word number: ' + str(bigram_test_letter_counter)
     for key,value in result.items():
         print 'top' +str(key)+': ' + str(value)+'%'
