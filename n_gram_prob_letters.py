@@ -95,7 +95,8 @@ def ngram_unsmoothing_prob(i,ngram_letter_counter,n_1gram_letter_counter,tokens_
             else:
                 ngram_prob_list[ngram] = 0.0
             #print '~'*80
-        return ngram_prob_list
+        
+    return ngram_prob_list
 ######################################################################
 
 #################### ADD-ONE probabilities ############################
@@ -113,6 +114,7 @@ def ngram_add_one_prob(i,ngram_letter_counter,n_1gram_letter_counter,tokens_nr,l
             #print n_1gram_letter_counter[ngram[0:i-1]]
             #print letter_types_nrs
             ngram_prob_list[ngram] = (value+1.0) / (n_1gram_letter_counter[ngram[0:i-1]]+letter_types_nr)
+        
     return ngram_prob_list
 ########################################################################
 
@@ -156,7 +158,7 @@ def ngram_witten_bell_prob(i,ngram_letter_counter,tokens_nr,ngram_type_nr,letter
                 ngram_prob_list[ngram] = (ngram_type_nr + 0.0) / (z * (tokens_nr + ngram_type_nr))
             else:
                 ngram_prob_list[ngram] = (ngram_letter_counter[ngram] + 0.0) / (tokens_nr + ngram_type_nr)
-
+        
     return ngram_prob_list
 
 def c_star(ngram_letter_counter,ngram_witten_bell,tokens_nr):
@@ -233,7 +235,7 @@ def bigram_backoff(bigram_letter_counter,unigram_letter_counter,prob_tilde,alpha
             #print unigram_letter_counter[ngram[1:]]
             #print '+'*20
             backoff_prob_list[ngram]=alpha_n_1gram * unigram_letter_counter[ngram[1:]] / (0.0+all_letter_nr)
-
+        
     return backoff_prob_list
 
 def trigram_backoff(trigram_letter_counter,bigram_letter_counter,unigram_letter_counter,prob_tilde,prob_1tilde,bigram_alpha,unigram_alpha,all_leters_nr):
@@ -263,6 +265,7 @@ def trigram_backoff(trigram_letter_counter,bigram_letter_counter,unigram_letter_
         #    print tokens_nr
         #    print '++++++++++++++++++++++'
             trigram_backoff[ngram]=unigram_alpha*(0.0+ unigram_letter_counter[ngram[2:]]/tokens_nr)
+        
     return trigram_backoff
 
 def four_backoff(four_gram_letter_counter,prob_tilde,trigram_backoff,trigram_alpha):
@@ -273,6 +276,7 @@ def four_backoff(four_gram_letter_counter,prob_tilde,trigram_backoff,trigram_alp
             four_backoff[ngram]=prob_tilde[ngram]
         else:
             four_backoff[ngram]=(0.0+trigram_alpha)*trigram_backoff[ngram[1:]]
+        
     return four_backoff
 
 def fifth_backoff(fifthgram_letter_counter,prob_tilde,four_backoff,fourgram_alpha):
@@ -283,6 +287,7 @@ def fifth_backoff(fifthgram_letter_counter,prob_tilde,four_backoff,fourgram_alph
             fifth_backoff[ngram]=prob_tilde[ngram]
         else:
             fifth_backoff[ngram]=(0.0+fourgram_alpha)*four_backoff[ngram[1:]]
+        
     return fifth_backoff
 
 #################### REPLACE RARLY OCCURED CHARACTERS WITH * ##################
@@ -303,6 +308,18 @@ def replace_special_char_with_star(filename_in,filenam_out,special_chars):
         new_data=new_data.replace(special_chars[i],'*')
         i += 1
     file_out.write(new_data)
+    
+def tokens_words_with_stars(tokens_list,special_char_string):
+    new_tokens_list=collections.defaultdict(int)
+    #print special_char_string
+    for ngram,value in tokens_list.iteritems():
+        new_ngram=ngram
+        for c in special_char_string:
+            new_ngram=new_ngram.replace(c,'*')
+        new_tokens_list[new_ngram]=value
+        #print ngram
+        #print new_ngram
+    return new_tokens_list
 
 ########################### TRAIN #############################
 def train_char_ngram(ngram_letter_counter,order,orderplus1_ngram_prob):
@@ -399,23 +416,17 @@ def result_list(test_counter, ranked_train_counter,normalize_nr):
 ############################### MAIN ############################
 if __name__ == '__main__':
     train_file_name_in = sys.argv[1]
-    train_file_name_out = sys.argv[2]
-    test_file_name_in=sys.argv[3]
-    test_file_name_out=sys.argv[4]
-    i=sys.argv[5]
-    order = 2
+    test_file_name_in=sys.argv[2]
+    test_file_name_out=sys.argv[3]
+    language=sys.argv[4]
     
     train_token_list_first=get_tokens_list(train_file_name_in)
-    
     unigram_letter_counter = uni_gram_letter_counter(1,train_token_list_first)
-    tokens_nr = sum(unigram_letter_counter.values())
-    special_char_list = list_of_small_nr_of_special_char(unigram_letter_counter)
-    
-    replace_special_char_with_star(train_file_name_in,train_file_name_out,special_char_list)
-    replace_special_char_with_star(test_file_name_in,test_file_name_out,special_char_list)
-    
-    train_token_list=get_tokens_list(train_file_name_out)
+    special_char_list = list_of_small_nr_of_special_char(unigram_letter_counter)    
+    train_token_list=tokens_words_with_stars(train_token_list_first,special_char_list)
+
     test_token_list = get_tokens_list(test_file_name_out)
+
 
 #############################################################################################
     
