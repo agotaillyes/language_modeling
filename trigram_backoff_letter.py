@@ -40,10 +40,11 @@ def uni_gram_letter_counter(j,tokens_list):
         while lenght-j+1 > i:
             ngram_list[word[i:i+j]] += tokens_list[word]
             i += 1
+
     space_value=ngram_list[' ']
     space_value=(space_value-2*(j-1))/2
     ngram_list[' ']=space_value
-
+    
     return ngram_list
 
 def ngram_letter_counter(j,unigram_letter_counter,tokens_list):
@@ -79,7 +80,7 @@ def ngram_types(letter_counter):
     
 ############## WITTEN-BELL DISCOUNTING probabilities ####################
 
-def ngram_witten_bell_prob(i,ngram_letter_counter,tokens_nr,n_1gram_type_nr,letter_types):
+def ngram_witten_bell_prob(i,ngram_letter_counter,tokens_nr,letter_types):
     z_list = collections.defaultdict(int)
     observed_type = collections.defaultdict(int)
     ngram_prob_list = collections.defaultdict(int)
@@ -179,7 +180,7 @@ def bigram_backoff(bigram_letter_counter,unigram_letter_counter,prob_tilde,alpha
         
     return backoff_prob_list
 
-def trigram_backoff(trigram_letter_counter,bigram_letter_counter,unigram_letter_counter,prob_tilde,prob_1tilde,bigram_alpha,unigram_alpha,all_leters_nr):
+def trigram_backoff(trigram_letter_counter,bigram_letter_counter,unigram_letter_counter,prob_tilde,prob_1tilde,bigram_alpha,unigram_alpha,tokens_nr):
     trigram_backoff=collections.defaultdict(int)
     
     for ngram, value in trigram_letter_counter.items():
@@ -271,7 +272,7 @@ if __name__ == '__main__':
     # LANGUAGE 1
     train_file_name_in1 = '/home/agotaillyes/text_corpus/english.txt'
     language1='english'
-    order=2
+    order=3
     
     train_token_list_first1=get_tokens_list(order-1,train_file_name_in1)
     unigram_letter_counter1 = uni_gram_letter_counter(1,train_token_list_first1)
@@ -280,9 +281,11 @@ if __name__ == '__main__':
     
     unigram_letter_counter1 = uni_gram_letter_counter(1,train_token_list1)
     bigram_letter_counter1 = ngram_letter_counter(2,unigram_letter_counter1,train_token_list1)
+    trigram_letter_counter1 = ngram_letter_counter(3,unigram_letter_counter1,train_token_list1)
         
     letter_types_nr1 = len(ngram_types(unigram_letter_counter1))
     bigram_types_nr1 = len(ngram_types(bigram_letter_counter1))
+    trigram_types_nr1 = len(ngram_types(trigram_letter_counter1))
     
     # all letters number
     tokens_nr1 = sum(unigram_letter_counter1.values())
@@ -298,9 +301,11 @@ if __name__ == '__main__':
     
     unigram_letter_counter2 = uni_gram_letter_counter(1,train_token_list2)
     bigram_letter_counter2 = ngram_letter_counter(2,unigram_letter_counter2,train_token_list2)
+    trigram_letter_counter2 = ngram_letter_counter(3,unigram_letter_counter2,train_token_list2)
         
     letter_types_nr2 = len(ngram_types(unigram_letter_counter2))
     bigram_types_nr2 = len(ngram_types(bigram_letter_counter2))
+    trigram_types_nr2 = len(ngram_types(trigram_letter_counter2))
     
     # all letters number
     tokens_nr2 = sum(unigram_letter_counter2.values())
@@ -316,9 +321,11 @@ if __name__ == '__main__':
     
     unigram_letter_counter3 = uni_gram_letter_counter(1,train_token_list3)
     bigram_letter_counter3 = ngram_letter_counter(2,unigram_letter_counter3,train_token_list3)
+    trigram_letter_counter3 = ngram_letter_counter(3,unigram_letter_counter3,train_token_list3)
         
     letter_types_nr3 = len(ngram_types(unigram_letter_counter3))
     bigram_types_nr3 = len(ngram_types(bigram_letter_counter3))
+    trigram_types_nr3 = len(ngram_types(trigram_letter_counter3))
     
     # all letters number
     tokens_nr3 = sum(unigram_letter_counter3.values())
@@ -334,9 +341,11 @@ if __name__ == '__main__':
     
     unigram_letter_counter4 = uni_gram_letter_counter(1,train_token_list4)
     bigram_letter_counter4 = ngram_letter_counter(2,unigram_letter_counter4,train_token_list4)
+    trigram_letter_counter4 = ngram_letter_counter(3,unigram_letter_counter4,train_token_list4)
         
     letter_types_nr4 = len(ngram_types(unigram_letter_counter4))
     bigram_types_nr4 = len(ngram_types(bigram_letter_counter4))
+    trigram_types_nr4 = len(ngram_types(trigram_letter_counter4))
     
     # all letters number
     tokens_nr4 = sum(unigram_letter_counter4.values())
@@ -367,23 +376,34 @@ if __name__ == '__main__':
     test_token_list = get_tokens_list(order-1,test_file_name_in)
     test_result=collections.defaultdict(int)
     
-    bigram_witten_bell1 = ngram_witten_bell_prob(2,bigram_letter_counter1,tokens_nr1,letter_types_nr1,letter_types_nr1)
-    bigram_witten_bell2 = ngram_witten_bell_prob(2,bigram_letter_counter2,tokens_nr2,letter_types_nr2,letter_types_nr2)
-    bigram_witten_bell3 = ngram_witten_bell_prob(2,bigram_letter_counter3,tokens_nr3,letter_types_nr3,letter_types_nr3)
-    bigram_witten_bell4 = ngram_witten_bell_prob(2,bigram_letter_counter4,tokens_nr4,letter_types_nr4,letter_types_nr4)
-##    bigram_witten_bell5 = ngram_witten_bell_prob(2,bigram_letter_counter5,tokens_nr5,letter_types_nr5,letter_types_nr5)
+    bigram_witten_bell1 = ngram_witten_bell_prob(2,bigram_letter_counter1,tokens_nr1,letter_types_nr1)
+    bigram_witten_bell2 = ngram_witten_bell_prob(2,bigram_letter_counter2,tokens_nr2,letter_types_nr2)
+    bigram_witten_bell3 = ngram_witten_bell_prob(2,bigram_letter_counter3,tokens_nr3,letter_types_nr3)
+    bigram_witten_bell4 = ngram_witten_bell_prob(2,bigram_letter_counter4,tokens_nr4,letter_types_nr4)
+##    bigram_witten_bell5 = ngram_witten_bell_prob(2,bigram_letter_counter5,tokens_nr5,letter_types_nr5)
     
+    trigram_witten_bell1 = ngram_witten_bell_prob(3,trigram_letter_counter1,tokens_nr1,letter_types_nr1)
+    trigram_witten_bell2 = ngram_witten_bell_prob(3,trigram_letter_counter2,tokens_nr2,letter_types_nr2)
+    trigram_witten_bell3 = ngram_witten_bell_prob(3,trigram_letter_counter3,tokens_nr3,letter_types_nr3)
+    trigram_witten_bell4 = ngram_witten_bell_prob(3,trigram_letter_counter4,tokens_nr4,letter_types_nr4)
+##    trigram_witten_bell5 = ngram_witten_bell_prob(3,trigram_letter_counter5,tokens_nr5,letter_types_nr5)
+   
     bigram_star1 = c_star(bigram_letter_counter1,bigram_witten_bell1,tokens_nr1)
     bigram_star2 = c_star(bigram_letter_counter2,bigram_witten_bell2,tokens_nr2)
     bigram_star3 = c_star(bigram_letter_counter3,bigram_witten_bell3,tokens_nr3)
     bigram_star4 = c_star(bigram_letter_counter4,bigram_witten_bell4,tokens_nr4)
 ##    bigram_star5 = c_star(bigram_letter_counter5,bigram_witten_bell5,tokens_nr5)
+
+    trigram_star1 = c_star(trigram_letter_counter1,trigram_witten_bell1,tokens_nr1)
+    trigram_star2 = c_star(trigram_letter_counter2,trigram_witten_bell2,tokens_nr2)
+    trigram_star3 = c_star(trigram_letter_counter3,trigram_witten_bell3,tokens_nr3)
+    trigram_star4 = c_star(trigram_letter_counter4,trigram_witten_bell4,tokens_nr4)
+##    trigram_star5 = c_star(trigram_letter_counter5,trigram_witten_bell5,tokens_nr5)
     
     unigram_prob_tilde1 = unigram_prob_tilde(unigram_letter_counter1,tokens_nr1)
     unigram_prob_tilde2 = unigram_prob_tilde(unigram_letter_counter2,tokens_nr2)
     unigram_prob_tilde3 = unigram_prob_tilde(unigram_letter_counter3,tokens_nr3)
     unigram_prob_tilde4 = unigram_prob_tilde(unigram_letter_counter4,tokens_nr4)
-##    unigram_prob_tilde5 = unigram_prob_tilde(unigram_letter_counter5,tokens_nr5)
     
     bigram_prob_tilde1 = prob_tilde(bigram_letter_counter1,unigram_letter_counter1,bigram_star1)
     bigram_prob_tilde2 = prob_tilde(bigram_letter_counter2,unigram_letter_counter2,bigram_star2)
@@ -391,23 +411,35 @@ if __name__ == '__main__':
     bigram_prob_tilde4 = prob_tilde(bigram_letter_counter4,unigram_letter_counter4,bigram_star4)
 ##    bigram_prob_tilde5 = prob_tilde(bigram_letter_counter5,unigram_letter_counter5,bigram_star5)
 
+    trigram_prob_tilde1 = prob_tilde(trigram_letter_counter1,bigram_letter_counter1,trigram_star1)
+    trigram_prob_tilde2 = prob_tilde(trigram_letter_counter2,bigram_letter_counter2,trigram_star2)
+    trigram_prob_tilde3 = prob_tilde(trigram_letter_counter3,bigram_letter_counter3,trigram_star3)
+    trigram_prob_tilde4 = prob_tilde(trigram_letter_counter4,bigram_letter_counter4,trigram_star4)
+##    trigram_prob_tilde5 = prob_tilde(trigram_letter_counter5,bigram_letter_counter5,trigram_star5)
+    
     unigram_alpha1 = alpha(unigram_prob_tilde1,bigram_prob_tilde1,unigram_letter_counter1,bigram_letter_counter1)
     unigram_alpha2 = alpha(unigram_prob_tilde2,bigram_prob_tilde2,unigram_letter_counter2,bigram_letter_counter2)
     unigram_alpha3 = alpha(unigram_prob_tilde3,bigram_prob_tilde3,unigram_letter_counter3,bigram_letter_counter3)
     unigram_alpha4 = alpha(unigram_prob_tilde4,bigram_prob_tilde4,unigram_letter_counter4,bigram_letter_counter4)
 ##    unigram_alpha5 = alpha(unigram_prob_tilde5,bigram_prob_tilde5,unigram_letter_counter5,bigram_letter_counter5)
-    
-    bigram_backoff_prob1=bigram_backoff(bigram_letter_counter1,unigram_letter_counter1,bigram_prob_tilde1,unigram_alpha1,tokens_nr1)
-    bigram_backoff_prob2=bigram_backoff(bigram_letter_counter2,unigram_letter_counter2,bigram_prob_tilde2,unigram_alpha2,tokens_nr2)
-    bigram_backoff_prob3=bigram_backoff(bigram_letter_counter3,unigram_letter_counter3,bigram_prob_tilde3,unigram_alpha3,tokens_nr3)
-    bigram_backoff_prob4=bigram_backoff(bigram_letter_counter4,unigram_letter_counter4,bigram_prob_tilde4,unigram_alpha4,tokens_nr4)
-##    bigram_backoff_prob5=bigram_backoff(bigram_letter_counter5,unigram_letter_counter5,bigram_prob_tilde5,unigram_alpha5,tokens_nr5)
 
-    result1 = test_part(test_token_list,order,bigram_backoff_prob1)
-    result2 = test_part(test_token_list,order,bigram_backoff_prob2)
-    result3 = test_part(test_token_list,order,bigram_backoff_prob3)
-    result4 = test_part(test_token_list,order,bigram_backoff_prob4)
-##    result5 = test_part(test_token_list,order,bigram_backoff_prob5)
+    bigram_alpha1 = alpha(bigram_prob_tilde1,trigram_prob_tilde1,bigram_letter_counter1,trigram_letter_counter1)
+    bigram_alpha2 = alpha(bigram_prob_tilde2,trigram_prob_tilde2,bigram_letter_counter2,trigram_letter_counter2)
+    bigram_alpha3 = alpha(bigram_prob_tilde3,trigram_prob_tilde3,bigram_letter_counter3,trigram_letter_counter3)
+    bigram_alpha4 = alpha(bigram_prob_tilde4,trigram_prob_tilde4,bigram_letter_counter4,trigram_letter_counter4)
+##    bigram_alpha5 = alpha(bigram_prob_tilde5,trigram_prob_tilde5,bigram_letter_counter5,trigram_letter_counter5)
+    
+    trigram_backoff_prob1=trigram_backoff(trigram_letter_counter1,bigram_letter_counter1,unigram_letter_counter1,trigram_prob_tilde1,bigram_prob_tilde1,bigram_alpha1,unigram_alpha1,tokens_nr1)
+    trigram_backoff_prob2=trigram_backoff(trigram_letter_counter2,bigram_letter_counter2,unigram_letter_counter2,trigram_prob_tilde2,bigram_prob_tilde2,bigram_alpha2,unigram_alpha2,tokens_nr2)
+    trigram_backoff_prob3=trigram_backoff(trigram_letter_counter3,bigram_letter_counter3,unigram_letter_counter3,trigram_prob_tilde3,bigram_prob_tilde3,bigram_alpha3,unigram_alpha3,tokens_nr3)
+    trigram_backoff_prob4=trigram_backoff(trigram_letter_counter4,bigram_letter_counter4,unigram_letter_counter4,trigram_prob_tilde4,bigram_prob_tilde4,bigram_alpha4,unigram_alpha4,tokens_nr4)
+##    trigram_backoff_prob5=trigram_backoff(trigram_letter_counter5,bigram_letter_counter5,unigram_letter_counter5,trigram_prob_tilde5,bigram_prob_tilde5,bigram_alpha5,unigram_alpha5,tokens_nr5)
+
+    result1 = test_part(test_token_list,order,trigram_backoff_prob1)
+    result2 = test_part(test_token_list,order,trigram_backoff_prob2)
+    result3 = test_part(test_token_list,order,trigram_backoff_prob3)
+    result4 = test_part(test_token_list,order,trigram_backoff_prob4)
+##    result5 = test_part(test_token_list,order,trigram_backoff_prob5)
     
     test_result[language1]=result1
     test_result[language2]=result2

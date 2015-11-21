@@ -142,7 +142,7 @@ if __name__ == '__main__':
     # LANGUAGE 1
     train_file_name_in1 = '/home/agotaillyes/text_corpus/english.txt'
     language1='english'
-    order=2
+    order=3
     
     train_token_list_first1=get_tokens_list(order-1,train_file_name_in1)
     unigram_letter_counter1 = uni_gram_letter_counter(1,train_token_list_first1)
@@ -151,9 +151,11 @@ if __name__ == '__main__':
     
     unigram_letter_counter1 = uni_gram_letter_counter(1,train_token_list1)
     bigram_letter_counter1 = ngram_letter_counter(2,unigram_letter_counter1,train_token_list1)
+    trigram_letter_counter1 = ngram_letter_counter(3,unigram_letter_counter1,train_token_list1)
         
     letter_types_nr1 = len(ngram_types(unigram_letter_counter1))
-    bigram_types_nr1 = len(ngram_types(bigram_letter_counter1)) 
+    bigram_types_nr1 = len(ngram_types(bigram_letter_counter1))
+    trigram_types_nr1 = len(ngram_types(trigram_letter_counter1))
     
     # all letters number
     tokens_nr1 = sum(unigram_letter_counter1.values())
@@ -169,9 +171,11 @@ if __name__ == '__main__':
     
     unigram_letter_counter2 = uni_gram_letter_counter(1,train_token_list2)
     bigram_letter_counter2 = ngram_letter_counter(2,unigram_letter_counter2,train_token_list2)
+    trigram_letter_counter2 = ngram_letter_counter(3,unigram_letter_counter2,train_token_list2)
         
     letter_types_nr2 = len(ngram_types(unigram_letter_counter2))
     bigram_types_nr2 = len(ngram_types(bigram_letter_counter2))
+    trigram_types_nr2 = len(ngram_types(trigram_letter_counter2))
     
     # all letters number
     tokens_nr2 = sum(unigram_letter_counter2.values())
@@ -187,9 +191,11 @@ if __name__ == '__main__':
     
     unigram_letter_counter3 = uni_gram_letter_counter(1,train_token_list3)
     bigram_letter_counter3 = ngram_letter_counter(2,unigram_letter_counter3,train_token_list3)
+    trigram_letter_counter3 = ngram_letter_counter(3,unigram_letter_counter3,train_token_list3)
         
     letter_types_nr3 = len(ngram_types(unigram_letter_counter3))
     bigram_types_nr3 = len(ngram_types(bigram_letter_counter3))
+    trigram_types_nr3 = len(ngram_types(trigram_letter_counter3))
     
     # all letters number
     tokens_nr3 = sum(unigram_letter_counter3.values())
@@ -205,9 +211,11 @@ if __name__ == '__main__':
     
     unigram_letter_counter4 = uni_gram_letter_counter(1,train_token_list4)
     bigram_letter_counter4 = ngram_letter_counter(2,unigram_letter_counter4,train_token_list4)
+    trigram_letter_counter4 = ngram_letter_counter(3,unigram_letter_counter4,train_token_list4)
         
     letter_types_nr4 = len(ngram_types(unigram_letter_counter4))
     bigram_types_nr4 = len(ngram_types(bigram_letter_counter4))
+    trigram_types_nr4 = len(ngram_types(trigram_letter_counter4)) 
     
     # all letters number
     tokens_nr4 = sum(unigram_letter_counter4.values())
@@ -223,9 +231,13 @@ if __name__ == '__main__':
 ##    
 ##    unigram_letter_counter5 = uni_gram_letter_counter(1,train_token_list5)
 ##    bigram_letter_counter5 = ngram_letter_counter(2,unigram_letter_counter5,train_token_list5)
+##    trigram_letter_counter5 = ngram_letter_counter(3,unigram_letter_counter5,train_token_list5)
+##    fourgram_letter_counter5 = ngram_letter_counter(4,unigram_letter_counter5,train_token_list5)
 ##        
 ##    letter_types_nr5 = len(ngram_types(unigram_letter_counter5))
 ##    bigram_types_nr5 = len(ngram_types(bigram_letter_counter5))
+##    trigram_types_nr5 = len(ngram_types(trigram_letter_counter5))
+##    fourgram_types_nr5 = len(ngram_types(fourgram_letter_counter5)) 
 ##    
 ##    # all letters number
 ##    tokens_nr5 = sum(unigram_letter_counter5.values())
@@ -234,17 +246,17 @@ if __name__ == '__main__':
     test_token_list = get_tokens_list(order-1,test_file_name_in)
     test_result=collections.defaultdict(int)
     
-    bigram_witten_bell1 = ngram_witten_bell_prob(2,bigram_letter_counter1,tokens_nr1,letter_types_nr1)
-    bigram_witten_bell2 = ngram_witten_bell_prob(2,bigram_letter_counter2,tokens_nr2,letter_types_nr2)
-    bigram_witten_bell3 = ngram_witten_bell_prob(2,bigram_letter_counter3,tokens_nr3,letter_types_nr3)
-    bigram_witten_bell4 = ngram_witten_bell_prob(2,bigram_letter_counter4,tokens_nr4,letter_types_nr4)
-##    bigram_witten_bell5 = ngram_witten_bell_prob(2,bigram_letter_counter5,tokens_nr5,letter_types_nr5)
+    trigram_witten_bell1 = ngram_witten_bell_prob(3,trigram_letter_counter1,tokens_nr1,letter_types_nr1)
+    trigram_witten_bell2 = ngram_witten_bell_prob(3,trigram_letter_counter2,tokens_nr2,letter_types_nr2)
+    trigram_witten_bell3 = ngram_witten_bell_prob(3,trigram_letter_counter3,tokens_nr3,letter_types_nr3)
+    trigram_witten_bell4 = ngram_witten_bell_prob(3,trigram_letter_counter4,tokens_nr4,letter_types_nr4)
+##    trigram_witten_bell5 = ngram_witten_bell_prob(3,trigram_letter_counter5,tokens_nr5,letter_types_nr5)
 
-    result1 = test_part(test_token_list,order,bigram_witten_bell1)
-    result2 = test_part(test_token_list,order,bigram_witten_bell2)
-    result3 = test_part(test_token_list,order,bigram_witten_bell3)
-    result4 = test_part(test_token_list,order,bigram_witten_bell4)
-##    result5 = test_part(test_token_list,order,bigram_witten_bell5)
+    result1 = test_part(test_token_list,order,trigram_witten_bell1)
+    result2 = test_part(test_token_list,order,trigram_witten_bell2)
+    result3 = test_part(test_token_list,order,trigram_witten_bell3)
+    result4 = test_part(test_token_list,order,trigram_witten_bell4)
+##    result5 = test_part(test_token_list,order,trigram_witten_bell5)
     
     test_result[language1]=result1
     test_result[language2]=result2

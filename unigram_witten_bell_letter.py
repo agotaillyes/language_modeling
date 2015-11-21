@@ -77,43 +77,18 @@ def ngram_types(letter_counter):
 ############## WITTEN-BELL DISCOUNTING probabilities ####################
 
 def ngram_witten_bell_prob(i,ngram_letter_counter,tokens_nr,letter_types):
-    z_list = collections.defaultdict(int)
-    observed_type = collections.defaultdict(int)
     ngram_prob_list = collections.defaultdict(int)
     z = 0
 
     for ngram1, value1 in ngram_letter_counter.iteritems():
-        if i!= 1:
-            alma=0
-        
-            for ngram2,value2 in ngram_letter_counter.iteritems():
-                if ngram1[0:i-1]==ngram2[0:i-1] and value2 !=0: 
-                    #print str(ngram1)+' '+str(value1)
-                    #print str(ngram2)+' '+str(value2)
-                    #print ngram1[0:i-1]
-                    #print ngram2[0:i-1]
-                    alma += 1
-           
-            observed_type[ngram1]=alma
-            z_list[ngram1]=letter_types-alma
-            #print alma
-            #print letter_types-alma
-            #print '~'*80
-        else:
-            if(value1 == 0):
-                z += 1
+        if(value1 == 0):
+            z += 1
 
     for ngram,value in ngram_letter_counter.iteritems():
-        if i != 1:
-            if(value == 0):
-                ngram_prob_list[ngram] = (observed_type[ngram]+0.0)/(z_list[ngram]*(tokens_nr+observed_type[ngram]))
-            else:
-                ngram_prob_list[ngram] = (ngram_letter_counter[ngram]+0.0)/(tokens_nr+observed_type[ngram])
+        if(ngram_letter_counter[ngram] == 0):
+            ngram_prob_list[ngram] = (letter_types + 0.0) / (z * (tokens_nr + letter_types))
         else:
-            if(ngram_letter_counter[ngram] == 0):
-                ngram_prob_list[ngram] = (letter_types + 0.0) / (z * (tokens_nr + letter_types))
-            else:
-                ngram_prob_list[ngram] = (ngram_letter_counter[ngram] + 0.0) / (tokens_nr + letter_types)
+            ngram_prob_list[ngram] = (ngram_letter_counter[ngram] + 0.0) / (tokens_nr + letter_types)
         
     return ngram_prob_list
 
