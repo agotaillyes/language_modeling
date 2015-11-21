@@ -40,6 +40,9 @@ def uni_gram_letter_counter(j,tokens_list):
         while lenght-j+1 > i:
             ngram_list[word[i:i+j]] += tokens_list[word]
             i += 1
+    space_value=ngram_list[' ']
+    space_value=(space_value-2*(j-1))/2
+    ngram_list[' ']=space_value
 
     return ngram_list
 
@@ -76,7 +79,7 @@ def ngram_types(letter_counter):
     
 ############## WITTEN-BELL DISCOUNTING probabilities ####################
 
-def ngram_witten_bell_prob(i,ngram_letter_counter,tokens_nr,n_1gram_type_nr,letter_types):
+def ngram_witten_bell_prob(i,ngram_letter_counter,tokens_nr,letter_types):
     z_list = collections.defaultdict(int)
     observed_type = collections.defaultdict(int)
     ngram_prob_list = collections.defaultdict(int)
@@ -111,9 +114,9 @@ def ngram_witten_bell_prob(i,ngram_letter_counter,tokens_nr,n_1gram_type_nr,lett
                 ngram_prob_list[ngram] = (ngram_letter_counter[ngram]+0.0)/(tokens_nr+observed_type[ngram])
         else:
             if(ngram_letter_counter[ngram] == 0):
-                ngram_prob_list[ngram] = (ngram_type_nr + 0.0) / (z * (tokens_nr + ngram_type_nr))
+                ngram_prob_list[ngram] = (letter_types + 0.0) / (z * (tokens_nr + letter_types))
             else:
-                ngram_prob_list[ngram] = (ngram_letter_counter[ngram] + 0.0) / (tokens_nr + ngram_type_nr)
+                ngram_prob_list[ngram] = (ngram_letter_counter[ngram] + 0.0) / (tokens_nr + letter_types)
         
     return ngram_prob_list
 
@@ -166,13 +169,9 @@ if __name__ == '__main__':
     
     unigram_letter_counter1 = uni_gram_letter_counter(1,train_token_list1)
     bigram_letter_counter1 = ngram_letter_counter(2,unigram_letter_counter1,train_token_list1)
-    trigram_letter_counter1 = ngram_letter_counter(3,unigram_letter_counter1,train_token_list1)
-    fourgram_letter_counter1 = ngram_letter_counter(4,unigram_letter_counter1,train_token_list1)
         
     letter_types_nr1 = len(ngram_types(unigram_letter_counter1))
-    bigram_types_nr1 = len(ngram_types(bigram_letter_counter1))
-    trigram_types_nr1 = len(ngram_types(trigram_letter_counter1))
-    fourgram_types_nr1 = len(ngram_types(fourgram_letter_counter1)) 
+    bigram_types_nr1 = len(ngram_types(bigram_letter_counter1)) 
     
     # all letters number
     tokens_nr1 = sum(unigram_letter_counter1.values())
@@ -188,13 +187,9 @@ if __name__ == '__main__':
     
     unigram_letter_counter2 = uni_gram_letter_counter(1,train_token_list2)
     bigram_letter_counter2 = ngram_letter_counter(2,unigram_letter_counter2,train_token_list2)
-    trigram_letter_counter2 = ngram_letter_counter(3,unigram_letter_counter2,train_token_list2)
-    fourgram_letter_counter2 = ngram_letter_counter(4,unigram_letter_counter2,train_token_list2)
         
     letter_types_nr2 = len(ngram_types(unigram_letter_counter2))
     bigram_types_nr2 = len(ngram_types(bigram_letter_counter2))
-    trigram_types_nr2 = len(ngram_types(trigram_letter_counter2))
-    fourgram_types_nr2 = len(ngram_types(fourgram_letter_counter2)) 
     
     # all letters number
     tokens_nr2 = sum(unigram_letter_counter2.values())
@@ -210,13 +205,9 @@ if __name__ == '__main__':
     
     unigram_letter_counter3 = uni_gram_letter_counter(1,train_token_list3)
     bigram_letter_counter3 = ngram_letter_counter(2,unigram_letter_counter3,train_token_list3)
-    trigram_letter_counter3 = ngram_letter_counter(3,unigram_letter_counter3,train_token_list3)
-    fourgram_letter_counter3 = ngram_letter_counter(4,unigram_letter_counter3,train_token_list3)
         
     letter_types_nr3 = len(ngram_types(unigram_letter_counter3))
     bigram_types_nr3 = len(ngram_types(bigram_letter_counter3))
-    trigram_types_nr3 = len(ngram_types(trigram_letter_counter3))
-    fourgram_types_nr3 = len(ngram_types(fourgram_letter_counter3)) 
     
     # all letters number
     tokens_nr3 = sum(unigram_letter_counter3.values())
@@ -232,13 +223,9 @@ if __name__ == '__main__':
     
     unigram_letter_counter4 = uni_gram_letter_counter(1,train_token_list4)
     bigram_letter_counter4 = ngram_letter_counter(2,unigram_letter_counter4,train_token_list4)
-    trigram_letter_counter4 = ngram_letter_counter(3,unigram_letter_counter4,train_token_list4)
-    fourgram_letter_counter4 = ngram_letter_counter(4,unigram_letter_counter4,train_token_list4)
         
     letter_types_nr4 = len(ngram_types(unigram_letter_counter4))
     bigram_types_nr4 = len(ngram_types(bigram_letter_counter4))
-    trigram_types_nr4 = len(ngram_types(trigram_letter_counter4))
-    fourgram_types_nr4 = len(ngram_types(fourgram_letter_counter4)) 
     
     # all letters number
     tokens_nr4 = sum(unigram_letter_counter4.values())
@@ -254,13 +241,9 @@ if __name__ == '__main__':
 ##    
 ##    unigram_letter_counter5 = uni_gram_letter_counter(1,train_token_list5)
 ##    bigram_letter_counter5 = ngram_letter_counter(2,unigram_letter_counter5,train_token_list5)
-##    trigram_letter_counter5 = ngram_letter_counter(3,unigram_letter_counter5,train_token_list5)
-##    fourgram_letter_counter5 = ngram_letter_counter(4,unigram_letter_counter5,train_token_list5)
 ##        
 ##    letter_types_nr5 = len(ngram_types(unigram_letter_counter5))
 ##    bigram_types_nr5 = len(ngram_types(bigram_letter_counter5))
-##    trigram_types_nr5 = len(ngram_types(trigram_letter_counter5))
-##    fourgram_types_nr5 = len(ngram_types(fourgram_letter_counter5)) 
 ##    
 ##    # all letters number
 ##    tokens_nr5 = sum(unigram_letter_counter5.values())
@@ -269,11 +252,11 @@ if __name__ == '__main__':
     test_token_list = get_tokens_list(order-1,test_file_name_in)
     test_result=collections.defaultdict(int)
     
-    bigram_witten_bell1 = ngram_witten_bell_prob(2,bigram_letter_counter1,tokens_nr1,letter_types_nr1,letter_types_nr1)
-    bigram_witten_bell2 = ngram_witten_bell_prob(2,bigram_letter_counter2,tokens_nr2,letter_types_nr2,letter_types_nr2)
-    bigram_witten_bell3 = ngram_witten_bell_prob(2,bigram_letter_counter3,tokens_nr3,letter_types_nr3,letter_types_nr3)
-    bigram_witten_bell4 = ngram_witten_bell_prob(2,bigram_letter_counter4,tokens_nr4,letter_types_nr4,letter_types_nr4)
-##    bigram_witten_bell5 = ngram_witten_bell_prob(2,bigram_letter_counter5,tokens_nr5,letter_types_nr5,letter_types_nr5)
+    bigram_witten_bell1 = ngram_witten_bell_prob(2,bigram_letter_counter1,tokens_nr1,letter_types_nr1)
+    bigram_witten_bell2 = ngram_witten_bell_prob(2,bigram_letter_counter2,tokens_nr2,letter_types_nr2)
+    bigram_witten_bell3 = ngram_witten_bell_prob(2,bigram_letter_counter3,tokens_nr3,letter_types_nr3)
+    bigram_witten_bell4 = ngram_witten_bell_prob(2,bigram_letter_counter4,tokens_nr4,letter_types_nr4)
+##    bigram_witten_bell5 = ngram_witten_bell_prob(2,bigram_letter_counter5,tokens_nr5,letter_types_nr5)
 
     result1 = test_part(test_token_list,order,bigram_witten_bell1)
     result2 = test_part(test_token_list,order,bigram_witten_bell2)
