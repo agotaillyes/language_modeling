@@ -8,6 +8,7 @@ from collections import *
 from scipy.stats import rankdata
 import os
 import math
+from itertools import tee,islice
 
 # megkapjuk a beolvasott file osszes token-et (szavat) kozpontozas nelkul
 def get_tokens_list(i,input_file_name):
@@ -159,6 +160,32 @@ def test_part(test_tokens_list,order,ngram_prob):
         result += word_result
     return result
 
+def ngram_words(lst,n):
+    tlst=lst
+    while True:
+        a,b = tee(tlst)
+        l=tuple(islice(a,n))
+        if len(l) == n:
+            yield l
+            next(b)
+            tlst = b
+        else:
+            break
+        
+def convert_ngram(ngram_counter):
+    ngram_counter_list=collections.defaultdict(int)
+    for ngram,value in ngram_counter.iteritems():
+        alma=''
+        korte=''
+        for n in ngram:
+            alma=n+ ' '
+            korte+=alma
+        length=len(korte)
+        value2=korte[:len(korte)-1]
+        ngram_counter_list[value2]=value
+    
+    return ngram_counter_list
+    
 ############################### MAIN ############################
 if __name__ == '__main__':
     # LANGUAGE 1
@@ -200,7 +227,7 @@ if __name__ == '__main__':
     
     # LANGUAGE 3
     train_file_name_in3 = '/home/agotaillyes/text_corpus/german.txt'
-    language3='german.txt'
+    language3='german'
     
     train_token_list_first3=get_tokens_list(order-1,train_file_name_in3)
     unigram_letter_counter3 = uni_gram_letter_counter(1,train_token_list_first3)
@@ -257,26 +284,38 @@ if __name__ == '__main__':
 ##    tokens_nr5 = sum(unigram_letter_counter5.values())
     
     test_file_name_in=sys.argv[1]
-    test_token_list = get_tokens_list(order-1,test_file_name_in)
+##    test_token_list = get_tokens_list(order-1,test_file_name_in)
     test_result=collections.defaultdict(int)
 
     bigram_add_one_prob1 = ngram_add_one_prob(2,bigram_letter_counter1,unigram_letter_counter1,tokens_nr1,letter_types_nr1)
     bigram_add_one_prob2 = ngram_add_one_prob(2,bigram_letter_counter2,unigram_letter_counter2,tokens_nr2,letter_types_nr2)
     bigram_add_one_prob3 = ngram_add_one_prob(2,bigram_letter_counter3,unigram_letter_counter3,tokens_nr3,letter_types_nr3)
     bigram_add_one_prob4 = ngram_add_one_prob(2,bigram_letter_counter4,unigram_letter_counter4,tokens_nr4,letter_types_nr4)
-##    bigram_add_one_prob5 = ngram_add_one_prob(2,bigram_letter_counter5,unigram_letter_counter5,tokens_nr5,letter_types_nr5)
 
-    result1 = test_part(test_token_list,order,bigram_add_one_prob1)
-    result2 = test_part(test_token_list,order,bigram_add_one_prob2)
-    result3 = test_part(test_token_list,order,bigram_add_one_prob3)
-    result4 = test_part(test_token_list,order,bigram_add_one_prob4)
-##    result5 = test_part(test_token_list,order,bigram_add_one_prob5)
+###################################### TEST PART ###########################################
+    with open(test_file_name_in,"r") as myfile:
+        data=myfile.read()
+    words_test = re.findall("\w+",data)
     
-    test_result[language1]=result1
-    test_result[language2]=result2
-    test_result[language3]=result3
-    test_result[language4]=result4
-##    test_result[language5]=result5
+    bigram_counter_test = Counter(ngram_words(words_test,2))
+    bigram_letter_counter_test =convert_ngram(bigram_counter_test)
     
-    sorted_test = sorted(test_result.iteritems(), key=lambda (k,v):v,reverse=True)
-    print sorted_test
+    counter=collections.defaultdict(int)
+    
+    for ngram,value in bigram_letter_counter_test.iteritems():
+        actual_list=collections.defaultdict(int)
+        for word in ngram.split():
+            actual_list[word]+=1
+        result1=test_part(actual_list,order,bigram_add_one_prob1)
+        result2=test_part(actual_list,order,bigram_add_one_prob2)
+        result3=test_part(actual_list,order,bigram_add_one_prob3)
+        result4=test_part(actual_list,order,bigram_add_one_prob4)
+        
+        test_result[language1]=result1
+        test_result[language2]=result2
+        test_result[language3]=result3
+        test_result[language4]=result4
+        
+        sorted_test = sorted(test_result.iteritems(), key=lambda (k,v):v,reverse=True)
+        counter[sorted_test[0][0]]+=1
+    print counter
