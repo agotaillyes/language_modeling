@@ -11,6 +11,7 @@ import math
 from itertools import tee,islice
 
 # megkapjuk a beolvasott file osszes token-et (szavat) kozpontozas nelkul
+# megkapjuk a beolvasott file osszes token-et (szavat) kozpontozas nelkul
 def get_tokens_list(i,input_file_name):
     tokens_list = collections.defaultdict(int)
     punct = set(string.punctuation)
@@ -32,7 +33,7 @@ def get_tokens_list(i,input_file_name):
 
 # osszeszamolja, hogy j egymast koveto karakterbol mennyi van
 # a szovegben
-def uni_gram_letter_counter(j,tokens_list):
+def unigram_letter_counter(j,tokens_list):
     ngram_list = collections.defaultdict(int)
 
     for word in tokens_list:
@@ -54,7 +55,6 @@ def ngram_letter_counter(j,unigram_letter_counter,tokens_list):
     for unigram,value in unigram_letter_counter.iteritems():
         vocabulary.append(unigram);
     
-    ngram_counter_list=collections.defaultdict(int)
     ngram_l=(tuple("".join(item) for item in itertools.product(vocabulary,repeat=j)))
     
     for ngram in ngram_l:
@@ -84,15 +84,7 @@ def ngram_add_one_prob(i,ngram_letter_counter,n_1gram_letter_counter,tokens_nr,l
     ngram_prob_list = collections.defaultdict(int)
     
     for ngram,value in ngram_letter_counter.iteritems():
-        if i == 1:
-            ngram_prob_list[ngram] = (value+1.0) / (tokens_nr+letter_types_nr)
-        else:
-            #print ngram
-            #print ngram[0:i-1]
-            #print ngram_letter_counter[ngram]
-            #print n_1gram_letter_counter[ngram[0:i-1]]
-            #print letter_types_nrs
-            ngram_prob_list[ngram] = (value+1.0) / (n_1gram_letter_counter[ngram[0:i-1]]+letter_types_nr)
+        ngram_prob_list[ngram] = (value+1.0) / (n_1gram_letter_counter[ngram[0:i-1]]+letter_types_nr)
         
     return ngram_prob_list
 
@@ -100,51 +92,19 @@ def ngram_add_one_prob(i,ngram_letter_counter,n_1gram_letter_counter,tokens_nr,l
 def list_of_small_nr_of_special_char(unigram_letter_counter):
     list_char=''
     
-    for letter in unigram_letter_counter:
-        if unigram_letter_counter[letter] <= 30:
+    for letter,value in unigram_letter_counter.iteritems():
+        if value <= 30:
             list_char=list_char+letter
     return list_char
-def replace_special_char_with_star(filename_in,filenam_out,special_chars):
-    data=file(filename_in).read()
-    file_out=open(filenam_out,'w')
-    i=0
-    new_data=data
-    
-    while i<len(special_chars):
-        new_data=new_data.replace(special_chars[i],'*')
-        i += 1
-    file_out.write(new_data)
     
 def tokens_words_with_stars(tokens_list,special_char_string):
     new_tokens_list=collections.defaultdict(int)
-    #print special_char_string
     for ngram,value in tokens_list.iteritems():
         new_ngram=ngram
         for c in special_char_string:
             new_ngram=new_ngram.replace(c,'*')
         new_tokens_list[new_ngram]=value
-        #print ngram
-        #print new_ngram
     return new_tokens_list
-
-########################### TRAIN #############################
-def train_char_ngram(ngram_letter_counter,order,orderplus1_ngram_prob):
-    lm = defaultdict(Counter)
-
-    for word in ngram_letter_counter:
-        #print word
-        data = word
-        #print '~'*80
-        history,char =data[0:order],data[order]
-        #print history
-        #print char
-        if char != " " and not (history.startswith(" ") or history.endswith(" ")):                
-            word=history+char
-            lm[history][char]=orderplus1_ngram_prob[word]
-            #print word
-            #print lm[history][char]
-        #print '~'*80
-    return lm
 
 #################### TEST #######################################################
 
@@ -178,113 +138,89 @@ def convert_ngram(ngram_counter):
         alma=''
         korte=''
         for n in ngram:
-            alma=n+ ' '
-            korte+=alma
+            if not n.startswith('-') and n != '':
+                n = re.sub('[!"#$%&\'()+,-./:;<=>?@[\\]^_`{|}~1234567890]','',n)
+                n = n.lower()
+                alma=n+ ' '
+                korte+=alma
         length=len(korte)
         value2=korte[:len(korte)-1]
         ngram_counter_list[value2]=value
     
     return ngram_counter_list
-    
+
 ############################### MAIN ############################
 if __name__ == '__main__':
     # LANGUAGE 1
-    train_file_name_in1 = '/home/agotaillyes/text_corpus/english.txt'
+    train_file_name_in1 = '/home/agotaillyes/text_corpus/english2.txt'
     language1='english'
     order=2
     
     train_token_list_first1=get_tokens_list(order-1,train_file_name_in1)
-    unigram_letter_counter1 = uni_gram_letter_counter(1,train_token_list_first1)
+    unigram_letter_counter1 = unigram_letter_counter(1,train_token_list_first1)
     special_char_list1 = list_of_small_nr_of_special_char(unigram_letter_counter1)    
     train_token_list1=tokens_words_with_stars(train_token_list_first1,special_char_list1)
     
-    unigram_letter_counter1 = uni_gram_letter_counter(1,train_token_list1)
+    unigram_letter_counter1 = unigram_letter_counter(1,train_token_list1)
     bigram_letter_counter1 = ngram_letter_counter(2,unigram_letter_counter1,train_token_list1)
         
     letter_types_nr1 = len(ngram_types(unigram_letter_counter1))
-    bigram_types_nr1 = len(ngram_types(bigram_letter_counter1))
     
     # all letters number
     tokens_nr1 = sum(unigram_letter_counter1.values())
     
     # LANGUAGE 2
-    train_file_name_in2 = '/home/agotaillyes/text_corpus/dutch.txt'
+    train_file_name_in2 = '/home/agotaillyes/text_corpus/dutch2.txt'
     language2='dutch'
     
     train_token_list_first2=get_tokens_list(order-1,train_file_name_in2)
-    unigram_letter_counter2 = uni_gram_letter_counter(1,train_token_list_first2)
+    unigram_letter_counter2 = unigram_letter_counter(1,train_token_list_first2)
     special_char_list2 = list_of_small_nr_of_special_char(unigram_letter_counter2)    
     train_token_list2=tokens_words_with_stars(train_token_list_first2,special_char_list2)
     
-    unigram_letter_counter2 = uni_gram_letter_counter(1,train_token_list2)
+    unigram_letter_counter2 = unigram_letter_counter(1,train_token_list2)
     bigram_letter_counter2 = ngram_letter_counter(2,unigram_letter_counter2,train_token_list2)
         
     letter_types_nr2 = len(ngram_types(unigram_letter_counter2))
-    bigram_types_nr2 = len(ngram_types(bigram_letter_counter2))
     
     # all letters number
     tokens_nr2 = sum(unigram_letter_counter2.values())
     
     # LANGUAGE 3
-    train_file_name_in3 = '/home/agotaillyes/text_corpus/german.txt'
+    train_file_name_in3 = '/home/agotaillyes/text_corpus/german2.txt'
     language3='german'
     
     train_token_list_first3=get_tokens_list(order-1,train_file_name_in3)
-    unigram_letter_counter3 = uni_gram_letter_counter(1,train_token_list_first3)
+    unigram_letter_counter3 = unigram_letter_counter(1,train_token_list_first3)
     special_char_list3 = list_of_small_nr_of_special_char(unigram_letter_counter3)    
     train_token_list3=tokens_words_with_stars(train_token_list_first3,special_char_list3)
     
-    unigram_letter_counter3 = uni_gram_letter_counter(1,train_token_list3)
+    unigram_letter_counter3 = unigram_letter_counter(1,train_token_list3)
     bigram_letter_counter3 = ngram_letter_counter(2,unigram_letter_counter3,train_token_list3)
         
     letter_types_nr3 = len(ngram_types(unigram_letter_counter3))
-    bigram_types_nr3 = len(ngram_types(bigram_letter_counter3))
     
     # all letters number
     tokens_nr3 = sum(unigram_letter_counter3.values())
     
     #LANGUAGE 4
-    train_file_name_in4 = '/home/agotaillyes/text_corpus/danish.txt'
+    train_file_name_in4 = '/home/agotaillyes/text_corpus/danish2.txt'
     language4='danish'
     
     train_token_list_first4=get_tokens_list(order-1,train_file_name_in4)
-    unigram_letter_counter4 = uni_gram_letter_counter(1,train_token_list_first4)
+    unigram_letter_counter4 = unigram_letter_counter(1,train_token_list_first4)
     special_char_list4 = list_of_small_nr_of_special_char(unigram_letter_counter4)    
     train_token_list4=tokens_words_with_stars(train_token_list_first4,special_char_list4)
     
-    unigram_letter_counter4 = uni_gram_letter_counter(1,train_token_list4)
+    unigram_letter_counter4 = unigram_letter_counter(1,train_token_list4)
     bigram_letter_counter4 = ngram_letter_counter(2,unigram_letter_counter4,train_token_list4)
         
     letter_types_nr4 = len(ngram_types(unigram_letter_counter4))
-    bigram_types_nr4 = len(ngram_types(bigram_letter_counter4))
     
     # all letters number
     tokens_nr4 = sum(unigram_letter_counter4.values())
     
-##    #LANGUAGE 5
-##    train_file_name_in5 = sys.argv[9]
-##    language5=sys.argv[10]
-##    
-##    train_token_list_first5=get_tokens_list(order,train_file_name_in5)
-##    unigram_letter_counter5 = uni_gram_letter_counter(1,train_token_list_first5)
-##    special_char_list5 = list_of_small_nr_of_special_char(unigram_letter_counter5)    
-##    train_token_list5=tokens_words_with_stars(train_token_list_first5,special_char_list5)
-##    
-##    unigram_letter_counter5 = uni_gram_letter_counter(1,train_token_list5)
-##    bigram_letter_counter5 = ngram_letter_counter(2,unigram_letter_counter5,train_token_list5)
-##    trigram_letter_counter5 = ngram_letter_counter(3,unigram_letter_counter5,train_token_list5)
-##    fourgram_letter_counter5 = ngram_letter_counter(4,unigram_letter_counter5,train_token_list5)
-##        
-##    letter_types_nr5 = len(ngram_types(unigram_letter_counter5))
-##    bigram_types_nr5 = len(ngram_types(bigram_letter_counter5))
-##    trigram_types_nr5 = len(ngram_types(trigram_letter_counter5))
-##    fourgram_types_nr5 = len(ngram_types(fourgram_letter_counter5)) 
-##    
-##    # all letters number
-##    tokens_nr5 = sum(unigram_letter_counter5.values())
-    
     test_file_name_in=sys.argv[1]
-##    test_token_list = get_tokens_list(order-1,test_file_name_in)
     test_result=collections.defaultdict(int)
 
     bigram_add_one_prob1 = ngram_add_one_prob(2,bigram_letter_counter1,unigram_letter_counter1,tokens_nr1,letter_types_nr1)
@@ -296,8 +232,9 @@ if __name__ == '__main__':
     with open(test_file_name_in,"r") as myfile:
         data=myfile.read()
     words_test = re.findall("\w+",data)
-    
-    bigram_counter_test = Counter(ngram_words(words_test,2))
+    ngram_test=sys.argv[2]
+    ngram_test_nr=int(ngram_test,0)
+    bigram_counter_test = Counter(ngram_words(words_test,ngram_test_nr))
     bigram_letter_counter_test =convert_ngram(bigram_counter_test)
     
     counter=collections.defaultdict(int)
@@ -318,4 +255,13 @@ if __name__ == '__main__':
         
         sorted_test = sorted(test_result.iteritems(), key=lambda (k,v):v,reverse=True)
         counter[sorted_test[0][0]]+=1
-    print counter
+    
+    norm_nr = sum(counter.values())
+    for lang, value in counter.iteritems():
+        counter[lang]=(value+0.0)/norm_nr
+        
+    result = sorted(counter.iteritems(), key=lambda (k,v):v,reverse=True)
+    print result
+    
+##    print 'add-one'
+##    print sorted(bigram_add_one_prob1.iteritems(), key=lambda (k,v):v,reverse=True)
