@@ -10,6 +10,8 @@ import os
 import math
 import pycld2 as cld2
 from itertools import tee,islice
+import psutil
+import time
 
 # megkapjuk a beolvasott file osszes token-et (szavat) kozpontozas nelkul
 def get_tokens_list(input_file_name):
@@ -232,6 +234,15 @@ def result_list(test_counter, ranked_train_counter,normalize_nr):
         value_new =(value+0.0) / normalize_nr
         normalized_result[key]=value_new
     return normalized_result
+
+def memory_usage_psutil():
+    # return the memory usage in MB
+    import psutil
+    process = psutil.Process(os.getpid())
+    mem = process.get_memory_info()[0] / float(2 ** 20)
+    return mem
+         
+start_time = time.time()
          
 ############################### MAIN ############################
 if __name__ == '__main__':
@@ -291,9 +302,13 @@ if __name__ == '__main__':
 ##    print 'witten-bell'
 ##    print sorted(bigram_witten_bell.iteritems(),key=lambda (k,v):v,reverse=False)
     
-    print '~' * 80
-    print 'bigram witten-bell probability'
-    print 'train word number: ' + str(tokens_nr)
-    print 'test word number: ' + str(test_tokens_nr)
-    for key,value in result.items():
-        print 'top' +str(key)+': ' + str(value)+'%'
+##    print '~' * 80
+##    print 'bigram witten-bell probability'
+##    print 'train word number: ' + str(tokens_nr)
+##    print 'test word number: ' + str(test_tokens_nr)
+##    for key,value in result.items():
+##        print 'top' +str(key)+': ' + str(value)+'%'
+
+    memory=memory_usage_psutil()
+    print memory*1.04858
+    print("--- %s seconds ---" % (time.time() - start_time))
