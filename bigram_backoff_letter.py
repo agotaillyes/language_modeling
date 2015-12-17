@@ -9,6 +9,8 @@ from scipy.stats import rankdata
 import os
 import math
 from itertools import tee,islice
+import psutil
+import time
 
 # megkapjuk a beolvasott file osszes token-et (szavat) kozpontozas nelkul
 # megkapjuk a beolvasott file osszes token-et (szavat) kozpontozas nelkul
@@ -33,18 +35,19 @@ def get_tokens_list(i,input_file_name):
 
 # osszeszamolja, hogy j egymast koveto karakterbol mennyi van
 # a szovegben
-def unigram_letter_counter(j,tokens_list):
+def unigram_letter_counter(order,tokens_list):
     ngram_list = collections.defaultdict(int)
 
     for word in tokens_list:
         lenght = len(word)
         i = 0
-        while lenght-j+1 > i:
-            ngram_list[word[i:i+j]] += tokens_list[word]
+        while lenght > i:
+            ngram_list[word[i:i+1]] += tokens_list[word]
             i += 1
-    space_value=ngram_list[' ']
-    space_value=(space_value-2*(j-1))/2
-    ngram_list[' ']=space_value
+    if ' ' in ngram_list:
+        space_value=ngram_list[' ']
+        space_value=(space_value-2*(order-1))/2
+        ngram_list[' ']=space_value
 
     return ngram_list
 
@@ -94,6 +97,7 @@ def ngram_witten_bell_prob(i,ngram_letter_counter,n_1gram_letter_counter,letter_
     for ngram,value in ngram_letter_counter.iteritems():
         observed_type[ngram] = new_bigram_list[ngram[0:i-1]]
         z_list[ngram]=letter_types-new_bigram_list[ngram[0:i-1]]
+##    print sorted(observed_type.iteritems(), key=lambda (k,v):v,reverse=True)
 
     for ngram,value in ngram_letter_counter.iteritems():
         if(observed_type[ngram] != 0):
@@ -112,7 +116,7 @@ def c_star(order,ngram_letter_counter,ngram_witten_bell,n_1gram_letter_counter):
         else:
             alma=n_1gram_letter_counter[ngram[0:order-1]]*ngram_witten_bell[ngram]
             if alma >= 0.5:
-                c_star[ngram]=round(n_1gram_letter_counter[ngram[0:order-1]]*ngram_witten_bell[ngram])
+                c_star[ngram]=round(alma)
             else:
                 c_star[ngram]=n_1gram_letter_counter[ngram[0:order-1]]*ngram_witten_bell[ngram]
     return c_star
@@ -229,6 +233,15 @@ def convert_ngram(ngram_counter):
     
     return ngram_counter_list
 
+def memory_usage_psutil():
+    # return the memory usage in MB
+    import psutil
+    process = psutil.Process(os.getpid())
+    mem = process.get_memory_info()[0] / float(2 ** 20)
+    return mem
+         
+start_time = time.time()
+
 ############################### MAIN ############################
 if __name__ == '__main__':
     # LANGUAGE 1
@@ -237,11 +250,11 @@ if __name__ == '__main__':
     order=2
     
     train_token_list_first1=get_tokens_list(order-1,train_file_name_in1)
-    unigram_letter_counter1 = unigram_letter_counter(1,train_token_list_first1)
+    unigram_letter_counter1 = unigram_letter_counter(order,train_token_list_first1)
     special_char_list1 = list_of_small_nr_of_special_char(unigram_letter_counter1)    
     train_token_list1=tokens_words_with_stars(train_token_list_first1,special_char_list1)
     
-    unigram_letter_counter1 = unigram_letter_counter(1,train_token_list1)
+    unigram_letter_counter1 = unigram_letter_counter(order,train_token_list1)
     bigram_letter_counter1 = ngram_letter_counter(2,unigram_letter_counter1,train_token_list1)
         
     letter_types_nr1 = len(ngram_types(unigram_letter_counter1))
@@ -254,11 +267,11 @@ if __name__ == '__main__':
     language2='dutch'
     
     train_token_list_first2=get_tokens_list(order-1,train_file_name_in2)
-    unigram_letter_counter2 = unigram_letter_counter(1,train_token_list_first2)
+    unigram_letter_counter2 = unigram_letter_counter(order,train_token_list_first2)
     special_char_list2 = list_of_small_nr_of_special_char(unigram_letter_counter2)    
     train_token_list2=tokens_words_with_stars(train_token_list_first2,special_char_list2)
     
-    unigram_letter_counter2 = unigram_letter_counter(1,train_token_list2)
+    unigram_letter_counter2 = unigram_letter_counter(order,train_token_list2)
     bigram_letter_counter2 = ngram_letter_counter(2,unigram_letter_counter2,train_token_list2)
         
     letter_types_nr2 = len(ngram_types(unigram_letter_counter2))
@@ -271,11 +284,11 @@ if __name__ == '__main__':
     language3='german'
     
     train_token_list_first3=get_tokens_list(order-1,train_file_name_in3)
-    unigram_letter_counter3 = unigram_letter_counter(1,train_token_list_first3)
+    unigram_letter_counter3 = unigram_letter_counter(order,train_token_list_first3)
     special_char_list3 = list_of_small_nr_of_special_char(unigram_letter_counter3)    
     train_token_list3=tokens_words_with_stars(train_token_list_first3,special_char_list3)
     
-    unigram_letter_counter3 = unigram_letter_counter(1,train_token_list3)
+    unigram_letter_counter3 = unigram_letter_counter(order,train_token_list3)
     bigram_letter_counter3 = ngram_letter_counter(2,unigram_letter_counter3,train_token_list3)
         
     letter_types_nr3 = len(ngram_types(unigram_letter_counter3))
@@ -288,11 +301,11 @@ if __name__ == '__main__':
     language4='danish'
     
     train_token_list_first4=get_tokens_list(order-1,train_file_name_in4)
-    unigram_letter_counter4 = unigram_letter_counter(1,train_token_list_first4)
+    unigram_letter_counter4 = unigram_letter_counter(order,train_token_list_first4)
     special_char_list4 = list_of_small_nr_of_special_char(unigram_letter_counter4)    
     train_token_list4=tokens_words_with_stars(train_token_list_first4,special_char_list4)
     
-    unigram_letter_counter4 = unigram_letter_counter(1,train_token_list4)
+    unigram_letter_counter4 = unigram_letter_counter(order,train_token_list4)
     bigram_letter_counter4 = ngram_letter_counter(2,unigram_letter_counter4,train_token_list4)
         
     letter_types_nr4 = len(ngram_types(unigram_letter_counter4))
@@ -366,6 +379,13 @@ if __name__ == '__main__':
         counter[lang]=(value+0.0)/norm_nr
         
     result = sorted(counter.iteritems(), key=lambda (k,v):v,reverse=True)
+    print 'bigram backoff'
     print result
     
-##    print sorted(unigram_letter_counter1.iteritems(), key=lambda (k,v):v,reverse=True)
+    memory=memory_usage_psutil()
+    print memory*1.04858
+    print("--- %s seconds ---" % (time.time() - start_time))
+    print psutil.cpu_percent()
+    print psutil.virtual_memory()
+    
+##    print sorted(bigram_backoff_prob1.iteritems(), key=lambda (k,v):v,reverse=True)
